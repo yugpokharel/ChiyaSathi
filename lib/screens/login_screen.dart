@@ -91,7 +91,7 @@ class LoginScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Align(
               alignment: Alignment.centerRight,
-              child: GestureDetector(
+                child: GestureDetector(
                 onTap: () {
                   showMySnackBar(
                     context: context,
