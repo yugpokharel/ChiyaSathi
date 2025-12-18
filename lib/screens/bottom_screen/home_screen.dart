@@ -69,9 +69,20 @@ class HomeScreen extends StatelessWidget {
                       color: Colors.black54,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                    const Text(
+                      'Table: Table no. 1',
+                      style: TextStyle(
+                        fontFamily: 'OpenSans',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 12,
+                        color: Colors.black,
+                      ),
+                    ),
                 ],
               ),
             ),
+            
             const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
