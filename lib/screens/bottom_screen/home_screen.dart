@@ -12,6 +12,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             Container(
               width: double.infinity,
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -26,7 +27,6 @@ class HomeScreen extends StatelessWidget {
                   bottomRight: Radius.circular(30),
                 ),
               ),
-              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -40,12 +40,11 @@ class HomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
-                      '● Available',
+                      '● Online',
                       style: TextStyle(
                         fontFamily: 'OpenSans',
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
                         fontSize: 12,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -56,7 +55,6 @@ class HomeScreen extends StatelessWidget {
                       fontFamily: 'OpenSans',
                       fontWeight: FontWeight.w700,
                       fontSize: 28,
-                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -64,25 +62,80 @@ class HomeScreen extends StatelessWidget {
                     'Welcome to Chiya Sathi',
                     style: TextStyle(
                       fontFamily: 'OpenSans',
-                      fontWeight: FontWeight.w400,
                       fontSize: 14,
-                      color: Colors.black54,
+                      fontWeight: FontWeight.w300,
+                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 8),
-                    const Text(
-                      'Table: Table no. 1',
-                      style: TextStyle(
-                        fontFamily: 'OpenSans',
-                        fontWeight: FontWeight.w400,
-                        fontSize: 12,
-                        color: Colors.black,
-                      ),
+                  const Text(
+                    'Table: Table no. 1',
+                    style: TextStyle(
+                      fontFamily: 'OpenSans',
+                      fontWeight: FontWeight.w300,
+                      fontSize: 12,
+                      color: Colors.black,
                     ),
+                  ),
                 ],
               ),
             ),
-            
+
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Quick Actions:',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: () {
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade300,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.qr_code_scanner,
+                              size: 32,
+                              color: Colors.orange.shade700,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Text(
+                            'Scan Your Table QR',
+                            style: TextStyle(
+                              fontFamily: 'OpenSans',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -91,10 +144,7 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Browse Menu:',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -116,6 +166,7 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
+
             const SizedBox(height: 24),
           ],
         ),
@@ -135,8 +186,7 @@ class _MenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
       onTap: () {},
       child: Container(
         decoration: BoxDecoration(
