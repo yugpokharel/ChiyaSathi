@@ -2,7 +2,7 @@ import 'package:chiya_sathi/core/error/failures.dart';
 import 'package:chiya_sathi/core/usecase/app_usecase.dart';
 import 'package:chiya_sathi/features/auth/data/repositories/auth_repository.dart';
 import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
-import 'package:click_shop/features/auth/domain/repositories/auth_repository.dart';
+import 'package:chiya_sathi/features/auth/domain/repositories/auth_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
