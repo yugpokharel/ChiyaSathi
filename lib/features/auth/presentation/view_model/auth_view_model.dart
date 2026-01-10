@@ -1,6 +1,6 @@
 import 'package:chiya_sathi/features/auth/domain/usecases/login_usecase.dart';
 import 'package:chiya_sathi/features/auth/domain/usecases/register_usecase.dart';
-import 'package:click_shop/features/auth/presentation/state/auth_state.dart';
+import 'package:chiya_sathi/features/auth/presentation/state/auth_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
