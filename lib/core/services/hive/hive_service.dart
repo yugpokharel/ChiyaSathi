@@ -19,7 +19,7 @@ class HiveService {
   }
 
   void _registerAdapter() {
-    if (!Hive.isAdapterRegistered(HiveTableConstants.authTypeId)) {
+    if (!Hive.isAdapterRegistered(HiveTableConstants.authtypeId)) {
       Hive.registerAdapter(AuthHiveModelAdapter());
     }
   }
@@ -28,47 +28,11 @@ class HiveService {
     await Hive.openBox<AuthHiveModel>(HiveTableConstants.authTable);
   }
 
-  // Delete all batches
-  // Future<void> deleteAllBatches() async {
-  //   await _batchBox.clear();
-  // }
-
-  // Close all boxes
   Future<void> close() async {
     await Hive.close();
   }
 
-  // ==================== Batch CRUD Operations ====================
-
-  // Get batch box
-  // Box<BatchHiveModel> get _batchBox =>
-  //     Hive.box<BatchHiveModel>(HiveTableConstant.batchTable);
-
-  // // Create a new batch
-  // Future<BatchHiveModel> createBatch(BatchHiveModel batch) async {
-  //   await _batchBox.put(batch.batchId, batch);
-  //   return batch;
-  // }
-
-  // // Get all batches
-  // List<BatchHiveModel> getAllBatches() {
-  //   return _batchBox.values.toList();
-  // }
-
-  // // Get batch by ID
-  // BatchHiveModel? getBatchById(String batchId) {
-  //   return _batchBox.get(batchId);
-  // }
-
-  // // Update a batch
-  // Future<void> updateBatch(BatchHiveModel batch) async {
-  //   await _batchBox.put(batch.batchId, batch);
-  // }
-
-  // // Delete a batch
-  // Future<void> deleteBatch(String batchId) async {
-  //   await _batchBox.delete(batchId);
-  // }
+ 
 
   Box<AuthHiveModel> get _authBox =>
       Hive.box<AuthHiveModel>(HiveTableConstants.authTable);
