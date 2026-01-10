@@ -1,4 +1,4 @@
-import 'package:click_shop/features/auth/domain/entities/auth_entity.dart';
+import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
 import 'package:equatable/equatable.dart';
 
 enum AuthStatus { initial, loading, registered, authenticated, error }
