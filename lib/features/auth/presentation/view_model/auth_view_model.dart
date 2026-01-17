@@ -1,10 +1,9 @@
 import 'package:chiya_sathi/features/auth/domain/usecases/login_usecase.dart';
 import 'package:chiya_sathi/features/auth/domain/usecases/register_usecase.dart';
 import 'package:chiya_sathi/features/auth/presentation/state/auth_state.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final AuthViewModelProvider = NotifierProvider<AuthViewModel, AuthState>(
+final authViewModelProvider = NotifierProvider<AuthViewModel, AuthState>(
   () => AuthViewModel(),
 );
 
@@ -16,12 +15,14 @@ class AuthViewModel extends Notifier<AuthState> {
   AuthState build() {
     _registerUsecase = ref.read(RegisterUsecaseProvider);
     _loginUsecase = ref.read(LoginUsecaseProvider);
-    return AuthState();
+    return AuthState(); // removed const
   }
 
   Future<void> register({
-    required String userName,
+    required String fullName,
+    required String username,
     required String email,
+    required String phoneNumber,
     required String password,
     String? profileImage,
   }) async {
@@ -29,8 +30,10 @@ class AuthViewModel extends Notifier<AuthState> {
 
     final result = await _registerUsecase(
       RegisterUsecaseParams(
-        userName: userName,
+        fullName: fullName,
+        userName: username,
         email: email,
+        phoneNumber: phoneNumber,
         password: password,
         profileImage: profileImage,
       ),
@@ -43,23 +46,25 @@ class AuthViewModel extends Notifier<AuthState> {
           errorMessage: failure.message,
         );
       },
-      (isRegistered) async {
-        if (!isRegistered) {
-          state = state.copyWith(
-            status: AuthStatus.error,
-            errorMessage: 'Registration failed',
-          );
-        } else {
-          state = state.copyWith(status: AuthStatus.registered);
-        }
+      (isRegistered) {
+        state = state.copyWith(
+          status: isRegistered ? AuthStatus.registered : AuthStatus.error,
+          errorMessage: isRegistered ? null : "Registration failed",
+        );
       },
     );
   }
 
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login({
+    required String email,
+    required String password,
+  }) async {
     state = state.copyWith(status: AuthStatus.loading);
-    final params = LoginUsecaseParams(email: email, password: password);
-    final result = await _loginUsecase(params);
+
+    final result = await _loginUsecase(LoginUsecaseParams(
+      email: email,
+      password: password,
+    ));
 
     result.fold(
       (failure) {

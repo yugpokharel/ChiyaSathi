@@ -17,4 +17,6 @@ class HiveTableConstants {
 
   static const int CartTypeId = 5;
   static const String CartTable = 'cart_table';
+
+  static get authBoxKey => null;
 }

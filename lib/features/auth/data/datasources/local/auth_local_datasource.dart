@@ -1,64 +1,30 @@
-import 'package:chiya_sathi/core/services/hive/hive_service.dart';
-import 'package:chiya_sathi/features/auth/data/datasources/remote/auth_datasources.dart';
+import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
 import 'package:chiya_sathi/features/auth/data/models/auth_hive_model.dart';
-import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 
-// Provider
-final AuthLocalDatasourceProvider = Provider<AuthLocalDatasource>((ref) {
-  final hiveService = ref.watch(hiveServiceProvider);
-  return AuthLocalDatasource(hiveService: hiveService);
-});
+abstract interface class AuthLocalDatasource {
+  Future<void> saveUser(AuthHiveModel model);
+  Future<AuthHiveModel?> getCurrentUser();
+  Future<void> logout();
+}
 
-class AuthLocalDatasource implements IAuthDatasource {
-  final HiveService _hiveService;
+class AuthLocalDatasourceImpl implements AuthLocalDatasource {
+  final Box<AuthHiveModel> box;
 
-  AuthLocalDatasource({required HiveService hiveService})
-    : _hiveService = hiveService;
+  AuthLocalDatasourceImpl(this.box);
 
   @override
-  Future<AuthHiveModel?> getCurrentUser() {
-    // TODO: implement getCurrentUser
-    throw UnimplementedError();
+  Future<void> saveUser(AuthHiveModel model) async {
+    await box.put(HiveTableConstants.authBoxKey, model);
   }
 
   @override
-  Future<bool> isEmailExists(String email) {
-    try {
-      final exists = _hiveService.isEmailExists(email);
-      return Future.value(exists);
-    } catch (e) {
-      return Future.value(false);
-    }
+  Future<AuthHiveModel?> getCurrentUser() async {
+    return box.get(HiveTableConstants.authBoxKey);
   }
 
   @override
-  Future<AuthHiveModel?> login(String email, String password) async {
-    try {
-      final user = await _hiveService.loginUser(email, password);
-      return Future.value(user);
-    } catch (e) {
-      return Future.value(null);
-    }
-  }
-
-  @override
-  Future<bool> logout() async {
-    try {
-      await _hiveService.logoutUser();
-      return Future.value(true);
-    } catch (e) {
-      return Future.value(false);
-    }
-  }
-
-  @override
-  Future<bool> register(AuthHiveModel model) async {
-    try {
-      await _hiveService.registerUser(model);
-      return Future.value(true);
-    } catch (e) {
-      return Future.value(false);
-    }
+  Future<void> logout() async {
+    await box.delete(HiveTableConstants.authBoxKey);
   }
 }
