@@ -7,6 +7,8 @@ abstract class AuthLocalDatasource {
   Future<void> saveUser(AuthHiveModel model);
   Future<AuthHiveModel?> getCurrentUser();
   Future<void> logout();
+
+  Future<dynamic> getToken() async {}
 }
 
 class AuthLocalDatasourceImpl implements AuthLocalDatasource {
@@ -27,6 +29,12 @@ class AuthLocalDatasourceImpl implements AuthLocalDatasource {
   @override
   Future<void> logout() async {
     await box.delete(HiveTableConstants.authBoxKey);
+  }
+  
+  @override
+  Future<dynamic> getToken() {
+    // TODO: implement getToken
+    throw UnimplementedError();
   }
 }
 

@@ -45,7 +45,7 @@ class RegisterUsecase implements UsecaseWithParams<bool, RegisterUsecaseParams> 
       userName: params.userName,
       email: params.email,
       phoneNumber: params.phoneNumber,
-      password: params.password, username: '',
+      password: params.password, username: '', token: '',
     );
     return _authRepository.register(entity);
   }

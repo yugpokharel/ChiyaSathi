@@ -44,7 +44,7 @@ class AuthApiModel {
       fullName: fullName,
       username: username,
       email: email,
-      phoneNumber: phoneNumber, userName: '',
+      phoneNumber: phoneNumber, userName: '', token: '',
     );
   }
 
