@@ -1,8 +1,9 @@
 import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
 import 'package:chiya_sathi/features/auth/data/models/auth_hive_model.dart';
 import 'package:hive/hive.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-abstract interface class AuthLocalDatasource {
+abstract class AuthLocalDatasource {
   Future<void> saveUser(AuthHiveModel model);
   Future<AuthHiveModel?> getCurrentUser();
   Future<void> logout();
@@ -28,3 +29,9 @@ class AuthLocalDatasourceImpl implements AuthLocalDatasource {
     await box.delete(HiveTableConstants.authBoxKey);
   }
 }
+
+// Provider for Riverpod
+final authLocalDatasourceProvider = Provider<AuthLocalDatasource>((ref) {
+  final box = Hive.box<AuthHiveModel>('authBox'); // make sure box is opened before use
+  return AuthLocalDatasourceImpl(box);
+});
