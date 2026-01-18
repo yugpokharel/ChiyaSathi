@@ -1,8 +1,9 @@
+import 'package:chiya_sathi/common/my_snack_bar.dart';
+import 'package:chiya_sathi/features/auth/presentation/state/auth_state.dart';
 import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../common/my_snack_bar.dart';
-import '../state/auth_state.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -18,6 +19,30 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    ref.listen<AuthState>(authViewModelProvider, (prev, next) {
+      if (next.status == AuthStatus.error && next.errorMessage != null) {
+        showMySnackBar(
+          context: context,
+          message: next.errorMessage!,
+          color: Colors.red,
+        );
+      }
+
+      if (next.status == AuthStatus.registered) {
+        showMySnackBar(
+          context: context,
+          message: "Signup Successful",
+          color: Colors.green,
+        );
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -38,18 +63,35 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final password = passwordController.text.trim();
     final confirm = confirmPasswordController.text.trim();
 
-    if (fullName.isEmpty || username.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty || confirm.isEmpty) {
-      showMySnackBar(context: context, message: "All fields are required", color: Colors.red);
+    if (fullName.isEmpty ||
+        username.isEmpty ||
+        phone.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        confirm.isEmpty) {
+      showMySnackBar(
+        context: context,
+        message: "All fields are required",
+        color: Colors.red,
+      );
       return;
     }
 
     if (!RegExp(r'\S+@\S+\.\S+').hasMatch(email)) {
-      showMySnackBar(context: context, message: "Enter a valid email", color: Colors.red);
+      showMySnackBar(
+        context: context,
+        message: "Enter a valid email",
+        color: Colors.red,
+      );
       return;
     }
 
     if (password != confirm) {
-      showMySnackBar(context: context, message: "Passwords do not match", color: Colors.red);
+      showMySnackBar(
+        context: context,
+        message: "Passwords do not match",
+        color: Colors.red,
+      );
       return;
     }
 
@@ -66,16 +108,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
 
-    ref.listen<AuthState>(authViewModelProvider, (prev, next) {
-      if (next.status == AuthStatus.error && next.errorMessage != null) {
-        showMySnackBar(context: context, message: next.errorMessage!, color: Colors.red);
-      }
-      if (next.status == AuthStatus.registered) {
-        showMySnackBar(context: context, message: "Signup Successful", color: Colors.green);
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-    });
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -83,7 +115,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             TextField(controller: fullNameController, decoration: const InputDecoration(hintText: "Full Name")),
@@ -96,7 +128,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _register,
+                onPressed: authState.status == AuthStatus.loading ? null : _register,
                 child: authState.status == AuthStatus.loading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text("SIGN UP"),

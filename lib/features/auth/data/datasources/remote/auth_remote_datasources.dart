@@ -9,7 +9,7 @@ abstract interface class AuthRemoteDatasource {
 
 class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   final http.Client client;
-  final String baseUrl = "http://10.0.2.2:5000/api";
+  final String baseUrl = "http://localhost:5000/api";
 
   AuthRemoteDatasourceImpl({required this.client});
 
