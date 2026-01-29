@@ -1,58 +1,93 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:chiya_sathi/features/auth/data/models/auth_api_model.dart';
+import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
 
-abstract interface class AuthRemoteDatasource {
+abstract class AuthRemoteDatasource {
   Future<String> login(String email, String password);
-  Future<void> register(AuthApiModel model);
+
+  Future<void> register({
+    required String email,
+    required String password,
+    required String fullName,
+    required String username,
+    required String phoneNumber,
+  });
+
+  Future<AuthEntity> getCurrentUser(String token);
 }
 
 class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   final http.Client client;
-  final String baseUrl = "http://localhost:5000/api";
+
+  static const String baseUrl = "http://localhost:5000/api";
 
   AuthRemoteDatasourceImpl({required this.client});
 
   @override
   Future<String> login(String email, String password) async {
-    try {
-      final response = await client.post(
-        Uri.parse('$baseUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "email": email,
-          "password": password,
-        }),
-      );
+    final response = await client.post(
+      Uri.parse('$baseUrl/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+      }),
+    );
 
-      final data = jsonDecode(response.body);
+    final Map<String, dynamic> data = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
-        return data['token']['token']; 
-      } else {
-        throw Exception(data['message'] ?? 'Login failed');
+    if (response.statusCode == 200) {
+      final token = data['token'] ?? data['data']?['token'];
+      if (token == null) {
+        throw Exception('Token not found in response');
       }
-    } catch (e) {
-      throw Exception("Server Error: ${e.toString()}");
+      return token;
+    } else {
+      throw Exception(data['message'] ?? 'Login failed');
     }
   }
 
   @override
-  Future<void> register(AuthApiModel model) async {
-    try {
-      final response = await client.post(
-        Uri.parse('$baseUrl/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(model.toJson()),
-      );
+  Future<void> register({
+    required String email,
+    required String password,
+    required String fullName,
+    required String username,
+    required String phoneNumber,
+  }) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/auth/register'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+        'fullName': fullName,
+        'username': username,
+        'phoneNumber': phoneNumber,
+      }),
+    );
 
-      final data = jsonDecode(response.body);
+    if (response.statusCode != 201) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? 'Signup failed');
+    }
+  }
 
-      if (response.statusCode != 201) {
-        throw Exception(data['message'] ?? 'Signup failed');
-      }
-    } catch (e) {
-      throw Exception("Server Error: ${e.toString()}");
+  @override
+  Future<AuthEntity> getCurrentUser(String token) async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/auth/me'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return AuthEntity.fromJson(data['data']);
+    } else {
+      throw Exception('Failed to get user profile');
     }
   }
 }

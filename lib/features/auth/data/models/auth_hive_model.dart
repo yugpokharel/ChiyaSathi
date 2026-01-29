@@ -26,6 +26,9 @@ class AuthHiveModel extends HiveObject {
   @HiveField(6)
   final String? batchId;
 
+  @HiveField(7)
+  final String? password; // added to store locally if needed
+
   AuthHiveModel({
     required this.id,
     required this.fullName,
@@ -34,9 +37,10 @@ class AuthHiveModel extends HiveObject {
     required this.phoneNumber,
     this.profileImage,
     this.batchId,
+    this.password,
   });
 
-  // from Entity → Hive
+  // From Entity → Hive
   factory AuthHiveModel.fromEntity(AuthEntity entity) {
     return AuthHiveModel(
       id: entity.id ?? '',
@@ -44,12 +48,9 @@ class AuthHiveModel extends HiveObject {
       username: entity.username,
       email: entity.email,
       phoneNumber: entity.phoneNumber,
+      password: entity.password,
     );
   }
-
-  get password => null;
-
-  get userId => null;
 
   // Hive → Entity
   AuthEntity toEntity() {
@@ -58,7 +59,9 @@ class AuthHiveModel extends HiveObject {
       fullName: fullName,
       username: username,
       email: email,
-      phoneNumber: phoneNumber, userName: '', token: '',
+      phoneNumber: phoneNumber,
+      token: null,
+      password: password,
     );
   }
 

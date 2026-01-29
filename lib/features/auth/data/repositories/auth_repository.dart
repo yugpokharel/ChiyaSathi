@@ -4,12 +4,6 @@ import 'package:chiya_sathi/features/auth/data/models/auth_hive_model.dart';
 import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
 import 'package:chiya_sathi/features/auth/domain/repositories/auth_repository.dart';
 import 'package:dartz/dartz.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final authRepositoryProvider = Provider<IAuthRepository>((ref) {
-  final localDatasource = ref.watch(authLocalDatasourceProvider);
-  return AuthRepository(authDatasource: localDatasource);
-});
 
 class AuthRepository implements IAuthRepository {
   final AuthLocalDatasource _authDatasource;
@@ -22,7 +16,7 @@ class AuthRepository implements IAuthRepository {
     try {
       final model = AuthHiveModel.fromEntity(authEntity);
       await _authDatasource.saveUser(model);
-      return Right(true);
+      return const Right(true);
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
     }
@@ -35,7 +29,7 @@ class AuthRepository implements IAuthRepository {
       if (model != null && model.email == email && model.password == password) {
         return Right(model.toEntity());
       }
-      return Left(LocalDatabaseFailure(message: "Invalid email or password"));
+      return const Left(LocalDatabaseFailure(message: "Invalid email or password"));
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
     }
@@ -46,7 +40,7 @@ class AuthRepository implements IAuthRepository {
     try {
       final model = await _authDatasource.getCurrentUser();
       if (model != null) return Right(model.toEntity());
-      return Left(LocalDatabaseFailure(message: "No user found"));
+      return const Left(LocalDatabaseFailure(message: "No user found"));
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
     }
@@ -55,8 +49,8 @@ class AuthRepository implements IAuthRepository {
   @override
   Future<Either<Failure, bool>> logout() async {
     try {
-      await _authDatasource.logout();
-      return Right(true);
+      await _authDatasource.clearToken();
+      return const Right(true);
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
     }

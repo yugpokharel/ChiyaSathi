@@ -1,18 +1,18 @@
 import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
 import 'package:chiya_sathi/features/auth/data/models/auth_hive_model.dart';
 import 'package:hive/hive.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 abstract class AuthLocalDatasource {
   Future<void> saveUser(AuthHiveModel model);
+  Future<void> saveToken(String token);
   Future<AuthHiveModel?> getCurrentUser();
-  Future<void> logout();
-
-  Future<dynamic> getToken() async {}
+  Future<String?> getToken();
+  Future<void> clearToken();
 }
 
 class AuthLocalDatasourceImpl implements AuthLocalDatasource {
-  final Box<AuthHiveModel> box;
+  final Box box;
+  static const String _tokenKey = 'auth_token';
 
   AuthLocalDatasourceImpl(this.box);
 
@@ -22,24 +22,23 @@ class AuthLocalDatasourceImpl implements AuthLocalDatasource {
   }
 
   @override
-  Future<AuthHiveModel?> getCurrentUser() async {
-    return box.get(HiveTableConstants.authBoxKey);
+  Future<void> saveToken(String token) async {
+    await box.put(_tokenKey, token);
   }
 
   @override
-  Future<void> logout() async {
-    await box.delete(HiveTableConstants.authBoxKey);
+  Future<AuthHiveModel?> getCurrentUser() async {
+    return box.get(HiveTableConstants.authBoxKey) as AuthHiveModel?;
   }
-  
+
   @override
-  Future<dynamic> getToken() {
-    // TODO: implement getToken
-    throw UnimplementedError();
+  Future<String?> getToken() async {
+    return box.get(_tokenKey) as String?;
+  }
+
+  @override
+  Future<void> clearToken() async {
+    await box.delete(HiveTableConstants.authBoxKey);
+    await box.delete(_tokenKey);
   }
 }
-
-// Provider for Riverpod
-final authLocalDatasourceProvider = Provider<AuthLocalDatasource>((ref) {
-  final box = Hive.box<AuthHiveModel>('authBox'); // make sure box is opened before use
-  return AuthLocalDatasourceImpl(box);
-});

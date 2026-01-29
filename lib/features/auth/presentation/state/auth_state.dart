@@ -8,7 +8,7 @@ class AuthState extends Equatable {
   final AuthEntity? authEntity;
   final String? errorMessage;
 
-  AuthState({
+  const AuthState({
     this.status = AuthStatus.initial,
     this.authEntity,
     this.errorMessage,

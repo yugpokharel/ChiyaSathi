@@ -1,38 +1,41 @@
-import 'package:chiya_sathi/features/auth/data/repositories/auth_repository.dart';
-import 'package:chiya_sathi/features/auth/presentation/pages/signup_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
+import 'package:chiya_sathi/features/auth/domain/repositories/auth_repository.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthController extends ChangeNotifier {
-  final AuthRepository repository;
+  final IAuthRepository repository; // Use the interface type
 
   AuthController(this.repository);
 
   bool isLoading = false;
 
-  Future<void> login(String email, String password) async {
+  Future<String?> login(String email, String password) async {
     isLoading = true;
     notifyListeners();
 
-    try {
-      await repository.login(email, password);
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
+    final result = await repository.login(email, password);
+
+    isLoading = false;
+    notifyListeners();
+
+    return result.fold(
+      (failure) => failure.message, // Return error message
+      (userEntity) => null,         // Success! Return null
+    );
   }
 
-  Future<String?> SignupScreen(String email, String password, String confirmPassword) async {
+  Future<String?> signup(AuthEntity entity) async {
     isLoading = true;
     notifyListeners();
 
-    try {
-      await repository.SignupScreen(email, password, confirmPassword, phoneNumber, );
-      return null;
-    } catch (e) {
-      return e.toString();
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
+    final result = await repository.register(entity);
+
+    isLoading = false;
+    notifyListeners();
+
+    return result.fold(
+      (failure) => failure.message,
+      (_) => null,
+    );
   }
 }
