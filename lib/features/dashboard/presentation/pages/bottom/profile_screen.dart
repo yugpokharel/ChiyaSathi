@@ -124,18 +124,35 @@ class ProfileScreen extends ConsumerWidget {
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
       final url = imagePath.startsWith('http') 
           ? imagePath 
-          : 'http://localhost:5000$imagePath';
+          : 'http://192.168.1.100:5000$imagePath'; // Replace 192.168.1.100 with your IP
+      
+      print('Loading image from: $url'); // Debug logging
       
       return Image.network(
         url,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
+          print('Image load error: $error'); // Debug logging
           return Container(
             color: Colors.grey.shade200,
-            child: Icon(
-              Icons.broken_image,
-              size: 80,
-              color: Colors.grey.shade400,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.broken_image,
+                  size: 80,
+                  color: Colors.grey.shade400,
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Failed to load image\n$url',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  ),
+                ),
+              ],
             ),
           );
         },

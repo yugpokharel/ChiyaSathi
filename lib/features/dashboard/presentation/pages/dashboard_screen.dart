@@ -95,7 +95,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
       final url = imagePath.startsWith('http') 
           ? imagePath 
-          : 'http://localhost:5000$imagePath';
+          : 'http://192.168.1.100:5000$imagePath'; // Replace 192.168.1.100 with your IP
       
       return Image.network(
         url,

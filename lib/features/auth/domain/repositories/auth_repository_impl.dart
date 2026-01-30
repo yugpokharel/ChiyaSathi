@@ -18,10 +18,21 @@ class AuthRepositoryImpl implements IAuthRepository {
   @override
   Future<Either<Failure, AuthEntity>> login(String email, String password) async {
     try {
-      final token = await remote.login(email, password);
+      final result = await remote.login(email, password);
+      final token = result['token'] as String;
+      final userData = result['user'] as Map<String, dynamic>?;
 
       await local.saveToken(token);
 
+      // If user data is returned, use it
+      if (userData != null) {
+        return Right(AuthEntity.fromJson({
+          ...userData,
+          'token': token,
+        }));
+      }
+
+      // Otherwise return minimal user
       return Right(
         AuthEntity(
           id: null,

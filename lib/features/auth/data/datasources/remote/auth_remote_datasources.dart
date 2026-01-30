@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
 
 abstract class AuthRemoteDatasource {
-  Future<String> login(String email, String password);
+  Future<Map<String, dynamic>> login(String email, String password);
 
   Future<void> register({
     required String email,
@@ -21,12 +21,12 @@ abstract class AuthRemoteDatasource {
 class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   final http.Client client;
 
-  static const String baseUrl = "http://localhost:5000/api";
+  static const String baseUrl = "http://192.168.1.21:5000/api"; 
 
   AuthRemoteDatasourceImpl({required this.client});
 
   @override
-  Future<String> login(String email, String password) async {
+  Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await client.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: {'Content-Type': 'application/json'},
@@ -43,7 +43,10 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       if (token == null) {
         throw Exception('Token not found in response');
       }
-      return token;
+      return {
+        'token': token,
+        'user': data['data'] ?? data['user']
+      };
     } else {
       throw Exception(data['message'] ?? 'Login failed');
     }
