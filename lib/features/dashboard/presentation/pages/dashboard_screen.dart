@@ -41,7 +41,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             child: GestureDetector(
               onTap: () {
                 setState(() {
-                  _selectedIndex = 2; // Navigate to Profile tab
+                  _selectedIndex = 2;
                 });
               },
               child: Container(
@@ -91,11 +91,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildDashboardImage(String imagePath) {
-    // Check if it's a network URL (from server)
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
       final url = imagePath.startsWith('http') 
           ? imagePath 
-          : 'http://192.168.1.100:5000$imagePath'; // Replace 192.168.1.100 with your IP
+          : 'http://192.168.1.21:5000$imagePath'; 
       
       return Image.network(
         url,
@@ -111,13 +110,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         },
       );
     } else if (File(imagePath).existsSync()) {
-      // Local file
       return Image.file(
         File(imagePath),
         fit: BoxFit.cover,
       );
     } else {
-      // File not found
       return Container(
         color: Colors.grey.shade200,
         child: Icon(

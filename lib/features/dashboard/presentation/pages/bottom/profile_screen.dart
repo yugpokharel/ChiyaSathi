@@ -11,6 +11,9 @@ class ProfileScreen extends ConsumerWidget {
     final authState = ref.watch(authViewModelProvider);
     final authEntity = authState.authEntity;
 
+    print('Auth Entity: $authEntity');
+    print('Profile Picture: ${authEntity?.profilePicture}');
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -29,11 +32,9 @@ class ProfileScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 20),
-                  // Profile Picture
                   _buildProfilePicture(authEntity.profilePicture),
                   const SizedBox(height: 30),
                   
-                  // User Info
                   _buildInfoCard('Full Name', authEntity.fullName),
                   const SizedBox(height: 16),
                   _buildInfoCard('Username', authEntity.username),
@@ -43,13 +44,11 @@ class ProfileScreen extends ConsumerWidget {
                   _buildInfoCard('Phone Number', authEntity.phoneNumber),
                   const SizedBox(height: 30),
                   
-                  // Logout Button
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Add logout functionality here
                         Navigator.pushReplacementNamed(context, '/login');
                       },
                       style: ElevatedButton.styleFrom(
@@ -120,19 +119,18 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildImageWidget(String imagePath) {
-    // Check if it's a network URL (from server)
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
       final url = imagePath.startsWith('http') 
           ? imagePath 
-          : 'http://192.168.1.100:5000$imagePath'; // Replace 192.168.1.100 with your IP
+          : 'http://192.168.1.21:5000$imagePath'; 
       
-      print('Loading image from: $url'); // Debug logging
+      print('Loading image from: $url'); 
       
       return Image.network(
         url,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
-          print('Image load error: $error'); // Debug logging
+          print('Image load error: $error');
           return Container(
             color: Colors.grey.shade200,
             child: Column(
