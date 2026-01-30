@@ -104,11 +104,8 @@ class ProfileScreen extends ConsumerWidget {
           ],
         ),
         child: ClipOval(
-          child: profilePicturePath != null && File(profilePicturePath).existsSync()
-              ? Image.file(
-                  File(profilePicturePath),
-                  fit: BoxFit.cover,
-                )
+          child: profilePicturePath != null && profilePicturePath.isNotEmpty
+              ? _buildImageWidget(profilePicturePath)
               : Container(
                   color: Colors.grey.shade200,
                   child: Icon(
@@ -120,6 +117,59 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildImageWidget(String imagePath) {
+    // Check if it's a network URL (from server)
+    if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
+      final url = imagePath.startsWith('http') 
+          ? imagePath 
+          : 'http://localhost:5000$imagePath';
+      
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey.shade200,
+            child: Icon(
+              Icons.broken_image,
+              size: 80,
+              color: Colors.grey.shade400,
+            ),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: Colors.grey.shade200,
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
+      );
+    } else if (File(imagePath).existsSync()) {
+      // Local file
+      return Image.file(
+        File(imagePath),
+        fit: BoxFit.cover,
+      );
+    } else {
+      // File not found
+      return Container(
+        color: Colors.grey.shade200,
+        child: Icon(
+          Icons.broken_image,
+          size: 80,
+          color: Colors.grey.shade400,
+        ),
+      );
+    }
   }
 
   Widget _buildInfoCard(String label, String value) {
