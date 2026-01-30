@@ -75,6 +75,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           message: "Passwords do not match",
           color: Colors.red,
         );
+        return;
+      }
 
       if (_selectedImage == null) {
         showMySnackBar(
@@ -94,7 +96,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             profilePicture: _selectedImage,
           );
     }
-  }
   }
 
   Future<void> _pickImage() async {

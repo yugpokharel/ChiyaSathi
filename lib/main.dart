@@ -10,7 +10,6 @@ void main() async {
   final appDir = await getApplicationDocumentsDirectory();
   Hive.init(appDir.path);
   
-  // Open the auth box
   await Hive.openBox('authBox');
   
   runApp(
