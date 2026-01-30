@@ -7,6 +7,7 @@ class AuthApiModel {
   final String email;
   final String phoneNumber;
   final String? password;
+  final String? profilePicture;
 
   const AuthApiModel({
     this.id,
@@ -15,6 +16,7 @@ class AuthApiModel {
     required this.email,
     required this.phoneNumber,
     this.password,
+    this.profilePicture,
   });
 
   Map<String, dynamic> toJson() {
@@ -24,6 +26,7 @@ class AuthApiModel {
       "email": email,
       "phoneNumber": phoneNumber,
       "password": password,
+      "profilePicture": profilePicture,
     };
   }
 
@@ -34,6 +37,7 @@ class AuthApiModel {
       username: json['username'],
       email: json['email'],
       phoneNumber: json['phoneNumber'],
+      profilePicture: json['profilePicture'],
       password: json['password'],
     );
   }
@@ -46,6 +50,7 @@ class AuthApiModel {
       email: email,
       phoneNumber: phoneNumber,
       token: null,
+      profilePicture: profilePicture,
       password: password,
     );
   }
@@ -57,6 +62,7 @@ class AuthApiModel {
       username: entity.username,
       email: entity.email,
       phoneNumber: entity.phoneNumber,
+      profilePicture: entity.profilePicture,
       password: entity.password,
     );
   }

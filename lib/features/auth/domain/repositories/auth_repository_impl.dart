@@ -4,6 +4,7 @@ import 'package:chiya_sathi/features/auth/data/datasources/remote/auth_remote_da
 import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
 import 'package:chiya_sathi/features/auth/domain/repositories/auth_repository.dart';
 import 'package:dartz/dartz.dart';
+import 'dart:io';
 
 class AuthRepositoryImpl implements IAuthRepository {
   final AuthRemoteDatasource remote;
@@ -45,6 +46,9 @@ class AuthRepositoryImpl implements IAuthRepository {
         fullName: entity.fullName,
         username: entity.username,
         phoneNumber: entity.phoneNumber,
+        profilePicture: entity.profilePicture != null 
+          ? File(entity.profilePicture!) 
+          : null,
       );
       return const Right(true);
     } catch (e) {

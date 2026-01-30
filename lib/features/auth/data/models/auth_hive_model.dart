@@ -49,6 +49,7 @@ class AuthHiveModel extends HiveObject {
       email: entity.email,
       phoneNumber: entity.phoneNumber,
       password: entity.password,
+      profileImage: entity.profilePicture,
     );
   }
 
@@ -62,6 +63,7 @@ class AuthHiveModel extends HiveObject {
       phoneNumber: phoneNumber,
       token: null,
       password: password,
+      profilePicture: profileImage,
     );
   }
 

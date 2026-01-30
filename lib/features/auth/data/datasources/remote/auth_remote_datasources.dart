@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
 
@@ -11,6 +12,7 @@ abstract class AuthRemoteDatasource {
     required String fullName,
     required String username,
     required String phoneNumber,
+    File? profilePicture,
   });
 
   Future<AuthEntity> getCurrentUser(String token);
@@ -54,21 +56,35 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     required String fullName,
     required String username,
     required String phoneNumber,
+    File? profilePicture,
   }) async {
-    final response = await client.post(
+    final request = http.MultipartRequest(
+      'POST',
       Uri.parse('$baseUrl/auth/register'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-        'fullName': fullName,
-        'username': username,
-        'phoneNumber': phoneNumber,
-      }),
     );
 
+    // Add form fields
+    request.fields['email'] = email;
+    request.fields['password'] = password;
+    request.fields['fullName'] = fullName;
+    request.fields['username'] = username;
+    request.fields['phoneNumber'] = phoneNumber;
+
+    // Add profile picture if provided
+    if (profilePicture != null && profilePicture.existsSync()) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'profilePicture',
+          profilePicture.path,
+        ),
+      );
+    }
+
+    final response = await request.send();
+
     if (response.statusCode != 201) {
-      final Map<String, dynamic> data = jsonDecode(response.body);
+      final responseBody = await response.stream.bytesToString();
+      final Map<String, dynamic> data = jsonDecode(responseBody);
       throw Exception(data['message'] ?? 'Signup failed');
     }
   }

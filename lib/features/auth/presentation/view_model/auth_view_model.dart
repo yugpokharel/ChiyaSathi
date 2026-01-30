@@ -3,6 +3,7 @@ import '../state/auth_state.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
 import 'auth_usecase_providers.dart';
+import 'dart:io';
 
 class AuthViewModel extends Notifier<AuthState> {
   late final LoginUsecase _loginUsecase;
@@ -38,6 +39,7 @@ class AuthViewModel extends Notifier<AuthState> {
     required String email,
     required String phoneNumber,
     required String password,
+    File? profilePicture,
   }) async {
     state = state.copyWith(status: AuthStatus.loading);
 
@@ -47,6 +49,7 @@ class AuthViewModel extends Notifier<AuthState> {
       email: email,
       phoneNumber: phoneNumber,
       password: password,
+      profilePicture: profilePicture,
     ));
 
     result.fold(

@@ -4,6 +4,8 @@ import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_mode
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -24,6 +26,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   bool hidePassword = true;
   bool hideConfirm = true;
+  File? _selectedImage;
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -71,6 +75,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           message: "Passwords do not match",
           color: Colors.red,
         );
+
+      if (_selectedImage == null) {
+        showMySnackBar(
+          context: context,
+          message: "Please select a profile picture",
+          color: Colors.red,
+        );
         return;
       }
       
@@ -80,7 +91,26 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             phoneNumber: phoneController.text.trim(),
             email: emailController.text.trim(),
             password: passwordController.text.trim(),
+            profilePicture: _selectedImage,
           );
+    }
+  }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      showMySnackBar(
+        context: context,
+        message: "Error picking image: $e",
+        color: Colors.red,
+      );
     }
   }
 
@@ -129,7 +159,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 'Create your account',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 30),
+              _buildProfilePicturePicker(),
+              const SizedBox(height: 30),
               _buildField("FULL NAME", fullNameController, "Enter full name"),
               _buildField("USERNAME", usernameController, "Enter username"),
               _buildField("PHONE NUMBER", phoneController, "Enter phone number"),
@@ -241,6 +273,51 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           ),
         ),
         const SizedBox(height: 30),
+      ],
+    );
+  }
+
+  Widget _buildProfilePicturePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('PROFILE PICTURE', style: _labelStyle),
+        const SizedBox(height: 15),
+        GestureDetector(
+          onTap: _pickImage,
+          child: Container(
+            width: double.infinity,
+            height: 150,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: _selectedImage != null ? Colors.orange : Colors.grey.shade300,
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey.shade50,
+            ),
+            child: _selectedImage != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Image.file(
+                      _selectedImage!,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.image_not_supported,
+                          size: 40, color: Colors.grey.shade400),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tap to select a picture',
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
       ],
     );
   }
