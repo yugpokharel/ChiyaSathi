@@ -30,33 +30,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final ImagePicker _imagePicker = ImagePicker();
 
   @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-        if (next.status == AuthStatus.error && next.errorMessage != null) {
-          showMySnackBar(
-            context: context,
-            message: next.errorMessage!,
-            color: Colors.red,
-          );
-        }
-
-        if (next.status == AuthStatus.registered) {
-          showMySnackBar(
-            context: context,
-            message: "Signup Successful",
-            color: Colors.green,
-          );
-
-          Navigator.pushReplacementNamed(context, '/login');
-        }
-      });
-    });
-  }
-
-  @override
   void dispose() {
     fullNameController.dispose();
     usernameController.dispose();
@@ -86,7 +59,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         );
         return;
       }
-      
+
       ref.read(authViewModelProvider.notifier).register(
             fullName: fullNameController.text.trim(),
             username: usernameController.text.trim(),
@@ -132,6 +105,27 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
+
+    // ✅ Move ref.listen here inside build()
+    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+      if (next.status == AuthStatus.error && next.errorMessage != null) {
+        showMySnackBar(
+          context: context,
+          message: next.errorMessage!,
+          color: Colors.red,
+        );
+      }
+
+      if (next.status == AuthStatus.registered) {
+        showMySnackBar(
+          context: context,
+          message: "Signup Successful",
+          color: Colors.green,
+        );
+
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    });
 
     return Scaffold(
       backgroundColor: Colors.white,
