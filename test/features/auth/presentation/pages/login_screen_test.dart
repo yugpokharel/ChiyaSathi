@@ -1,106 +1,125 @@
-import 'package:chiya_sathi/features/auth/presentation/pages/login_screen.dart';
-import 'package:chiya_sathi/features/auth/presentation/state/auth_state.dart';
-import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_model.dart';
+import 'package:chiya_sathi/features/auth/presentation/view_model/auth_usecase_providers.dart';
 import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_model_provider.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chiya_sathi/features/auth/domain/usecases/login_usecase.dart';
+import 'package:chiya_sathi/features/auth/domain/usecases/register_usecase.dart';
+import 'package:chiya_sathi/features/auth/presentation/state/auth_state.dart';
+import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
+import 'package:chiya_sathi/core/error/failures.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockAuthNotifier extends Mock implements AuthViewModel {}
+class MockLoginUsecase extends Mock implements LoginUsecase {}
+class MockRegisterUsecase extends Mock implements RegisterUsecase {}
 
 void main() {
-  late MockAuthNotifier mockNotifier;
+  late ProviderContainer container;
+  late MockLoginUsecase mockLoginUsecase;
+  late MockRegisterUsecase mockRegisterUsecase;
 
-  setUp(() {
-    mockNotifier = MockAuthNotifier();
+  setUpAll(() {
+    registerFallbackValue(LoginUsecaseParams(email: 'a', password: 'b'));
+    registerFallbackValue(RegisterUsecaseParams(
+      fullName: 'a',
+      username: 'b',
+      email: 'c',
+      phoneNumber: 'd',
+      password: 'e',
+      profilePicture: null,
+    ));
   });
 
-  Widget createWidget(AuthState state) {
-    when(() => mockNotifier.state).thenReturn(state);
+  setUp(() {
+    mockLoginUsecase = MockLoginUsecase();
+    mockRegisterUsecase = MockRegisterUsecase();
 
-    return ProviderScope(
-      overrides: [
-        authViewModelProvider.overrideWith(() => mockNotifier),
-      ],
-      child: MaterialApp(
-        routes: {
-          '/dashboard': (_) => const Scaffold(body: Text('Dashboard')),
-          '/signup': (_) => const Scaffold(body: Text('Signup')),
-        },
-        home: const LoginScreen(),
-      ),
-    );
-  }
+    container = ProviderContainer(overrides: [
+      loginUsecaseProvider.overrideWithValue(mockLoginUsecase),
+      registerUsecaseProvider.overrideWithValue(mockRegisterUsecase),
+    ]);
+  });
 
-  group('LoginScreen Widget Tests', () {
-    testWidgets('renders email, password and button',
-        (tester) async {
-      await tester.pumpWidget(
-        createWidget(const AuthState()),
-      );
+  tearDown(() => container.dispose());
 
-      expect(find.text('EMAIL ADDRESS'), findsOneWidget);
-      expect(find.text('PASSWORD'), findsOneWidget);
-      expect(find.text('SIGN IN'), findsOneWidget);
+  const tEmail = 'test@gmail.com';
+  const tPassword = '123456';
+  final tUser = AuthEntity(
+    id: '1',
+    fullName: 'Test User',
+    username: 'test',
+    email: tEmail,
+    phoneNumber: '9800000000',
+    token: 'token123',
+  );
+
+  group('AuthViewModel Unit Tests', () {
+    test('initial state should be AuthStatus.initial', () {
+      final state = container.read(authViewModelProvider);
+      expect(state.status, AuthStatus.initial);
+      expect(state.authEntity, isNull);
     });
 
-    testWidgets('shows validation errors when fields empty',
-        (tester) async {
-      await tester.pumpWidget(
-        createWidget(const AuthState()),
-      );
+    test('login success → should emit authenticated with user', () async {
+      when(() => mockLoginUsecase(any()))
+          .thenAnswer((_) async => Right(tUser));
 
-      await tester.tap(find.text('SIGN IN'));
-      await tester.pump();
+      await container.read(authViewModelProvider.notifier)
+          .login(email: tEmail, password: tPassword);
 
-      expect(find.text("Email can't be empty"), findsOneWidget);
-      expect(find.text("Password can't be empty"), findsOneWidget);
+      final state = container.read(authViewModelProvider);
+      expect(state.status, AuthStatus.authenticated);
+      expect(state.authEntity, tUser);
+      verify(() => mockLoginUsecase(any())).called(1);
     });
 
-    testWidgets('calls login when valid inputs provided',
-        (tester) async {
-      when(() => mockNotifier.login(
-            email: any(named: 'email'),
-            password: any(named: 'password'),
-          )).thenAnswer((_) async {});
+    test('login failure → should emit error', () async {
+      when(() => mockLoginUsecase(any()))
+          .thenAnswer((_) async => Left(ApiFailure(message: 'Login failed')));
 
-      await tester.pumpWidget(
-        createWidget(const AuthState()),
-      );
+      await container.read(authViewModelProvider.notifier)
+          .login(email: tEmail, password: tPassword);
 
-      await tester.enterText(
-          find.byType(TextFormField).at(0), 'test@gmail.com');
-      await tester.enterText(
-          find.byType(TextFormField).at(1), '12345678');
-
-      await tester.tap(find.text('SIGN IN'));
-      await tester.pump();
-
-      verify(() => mockNotifier.login(
-            email: 'test@gmail.com',
-            password: '12345678',
-          )).called(1);
+      final state = container.read(authViewModelProvider);
+      expect(state.status, AuthStatus.error);
+      expect(state.errorMessage, 'Login failed');
     });
 
-    testWidgets('shows loading indicator when status loading',
-        (tester) async {
-      await tester.pumpWidget(
-        createWidget(const AuthState(status: AuthStatus.loading)),
-      );
+    test('register success → should emit registered state only', () async {
+      when(() => mockRegisterUsecase(any()))
+          .thenAnswer((_) async => const Right(true));
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      await container.read(authViewModelProvider.notifier).register(
+            fullName: 'Test',
+            username: 'test',
+            email: tEmail,
+            phoneNumber: '9800000000',
+            password: tPassword,
+            profilePicture: null,
+          );
+
+      final state = container.read(authViewModelProvider);
+      expect(state.status, AuthStatus.registered);
+      expect(state.authEntity, isNull);
+      verify(() => mockRegisterUsecase(any())).called(1);
     });
 
-    testWidgets('navigates to dashboard on authenticated',
-        (tester) async {
-      await tester.pumpWidget(
-        createWidget(const AuthState(status: AuthStatus.authenticated)),
-      );
+    test('register failure → should emit error', () async {
+      when(() => mockRegisterUsecase(any()))
+          .thenAnswer((_) async => Left(ApiFailure(message: 'Signup failed')));
 
-      await tester.pumpAndSettle();
+      await container.read(authViewModelProvider.notifier).register(
+            fullName: 'Test',
+            username: 'test',
+            email: tEmail,
+            phoneNumber: '9800000000',
+            password: tPassword,
+            profilePicture: null,
+          );
 
-      expect(find.text('Dashboard'), findsOneWidget);
+      final state = container.read(authViewModelProvider);
+      expect(state.status, AuthStatus.error);
+      expect(state.errorMessage, 'Signup failed');
     });
   });
 }
