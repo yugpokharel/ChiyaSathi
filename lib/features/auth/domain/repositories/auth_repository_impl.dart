@@ -24,7 +24,6 @@ class AuthRepositoryImpl implements IAuthRepository {
 
       await local.saveToken(token);
 
-      // If user data is returned, use it
       if (userData != null) {
         return Right(AuthEntity.fromJson({
           ...userData,
@@ -32,7 +31,6 @@ class AuthRepositoryImpl implements IAuthRepository {
         }));
       }
 
-      // Otherwise return minimal user
       return Right(
         AuthEntity(
           id: null,
