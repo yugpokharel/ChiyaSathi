@@ -34,30 +34,52 @@ class AuthViewModel extends Notifier<AuthState> {
   }
 
   Future<void> register({
-    required String fullName,
-    required String username,
-    required String email,
-    required String phoneNumber,
-    required String password,
-    File? profilePicture,
-  }) async {
-    state = state.copyWith(status: AuthStatus.loading);
+  required String fullName,
+  required String username,
+  required String email,
+  required String phoneNumber,
+  required String password,
+  File? profilePicture,
+}) async {
+  state = state.copyWith(status: AuthStatus.loading);
 
-    final result = await _registerUsecase(RegisterUsecaseParams(
-      fullName: fullName,
-      username: username,
-      email: email,
-      phoneNumber: phoneNumber,
-      password: password,
-      profilePicture: profilePicture,
-    ));
+  final result = await _registerUsecase(RegisterUsecaseParams(
+    fullName: fullName,
+    username: username,
+    email: email,
+    phoneNumber: phoneNumber,
+    password: password,
+    profilePicture: profilePicture,
+  ));
 
-    result.fold(
-      (failure) =>
-          state = state.copyWith(status: AuthStatus.error, errorMessage: failure.message),
-      (isRegistered) => state = state.copyWith(
-        status: isRegistered ? AuthStatus.registered : AuthStatus.error,
-      ),
-    );
-  }
+  await result.fold(
+    (failure) async {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: failure.message,
+      );
+    },
+    (isRegistered) async {
+      if (!isRegistered) {
+        state = state.copyWith(status: AuthStatus.error);
+        return;
+      }
+
+      final loginResult = await _loginUsecase(
+        LoginUsecaseParams(email: email, password: password),
+      );
+
+      loginResult.fold(
+        (failure) => state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: failure.message,
+        ),
+        (user) => state = state.copyWith(
+          status: AuthStatus.authenticated,
+          authEntity: user,
+        ),
+      );
+    },
+  );
+}
 }
