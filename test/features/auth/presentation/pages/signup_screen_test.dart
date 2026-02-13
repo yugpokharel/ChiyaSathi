@@ -21,7 +21,7 @@ void main() {
     registerFallbackValue(
       const AuthEntity(
         username: 'fallback',
-        email: 'fallback@example.com',
+        email: 'fallbackcom',
         password: 'fallback123',
         fullName: '',
         phoneNumber: '',

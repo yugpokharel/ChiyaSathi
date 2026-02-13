@@ -1,81 +1,92 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive/hive.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final box = Hive.box('authBox');
+
     return SafeArea(
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.orange.shade300, Colors.orange.shade400],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+            ValueListenableBuilder(
+              valueListenable: box.listenable(),
+              builder: (context, Box b, _) {
+                final tableId = b.get('tableId') as String?;
+                final isOnline = tableId != null;
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.orange.shade300, Colors.orange.shade400],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(20),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30),
                     ),
-                    child: const Text(
-                      '● Online',
-                      style: TextStyle(
-                        fontFamily: 'OpenSans',
-                        fontSize: 12,
-                        color: Colors.white,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isOnline ? Colors.green : Colors.red.shade400,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          isOnline ? '● Online' : '● Offline',
+                          style: const TextStyle(
+                            fontFamily: 'OpenSans',
+                            fontSize: 12,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Chiya Sathi',
+                        style: TextStyle(
+                          fontFamily: 'OpenSans',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 28,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Welcome to Chiya Sathi',
+                        style: TextStyle(
+                          fontFamily: 'OpenSans',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w300,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        isOnline ? 'Table: $tableId' : 'No table assigned',
+                        style: const TextStyle(
+                          fontFamily: 'OpenSans',
+                          fontWeight: FontWeight.w300,
+                          fontSize: 12,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Chiya Sathi',
-                    style: TextStyle(
-                      fontFamily: 'OpenSans',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 28,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Welcome to Chiya Sathi',
-                    style: TextStyle(
-                      fontFamily: 'OpenSans',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w300,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Table: Table no. 1',
-                    style: TextStyle(
-                      fontFamily: 'OpenSans',
-                      fontWeight: FontWeight.w300,
-                      fontSize: 12,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
 
             const SizedBox(height: 24),
@@ -92,7 +103,9 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/qr_scanner');
+                    },
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -133,43 +146,68 @@ class HomeScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Browse Menu:',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+            ValueListenableBuilder(
+              valueListenable: box.listenable(),
+              builder: (context, Box b, _) {
+                final tableId = b.get('tableId') as String?;
+                if (tableId == null) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Scan your table QR to view the menu.',
+                        style: TextStyle(fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.85,
-                    children: const [
-                      _MenuCard(title: 'Tea', image: 'assets/images/tea.jpg'),
-                      _MenuCard(
-                        title: 'Coffee',
-                        image: 'assets/images/coffee.jpg',
+                  );
+                }
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Browse Menu:',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      _MenuCard(
-                        title: 'Cigarette',
-                        image: 'assets/images/cigarette.jpg',
-                      ),
-                      _MenuCard(
-                        title: 'Snacks',
-                        image: 'assets/images/snacks.jpg',
+                      const SizedBox(height: 12),
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.85,
+                        children: const [
+                          _MenuCard(title: 'Tea', image: 'assets/images/tea.jpg'),
+                          _MenuCard(
+                            title: 'Coffee',
+                            image: 'assets/images/coffee.jpg',
+                          ),
+                          _MenuCard(
+                            title: 'Cigarette',
+                            image: 'assets/images/cigarette.jpg',
+                          ),
+                          _MenuCard(
+                            title: 'Snacks',
+                            image: 'assets/images/snacks.jpg',
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
 
             const SizedBox(height: 24),
@@ -180,16 +218,24 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _MenuCard extends StatelessWidget {
+class _MenuCard extends StatefulWidget {
   final String title;
   final String image;
 
   const _MenuCard({required this.title, required this.image});
 
   @override
+  State<_MenuCard> createState() => _MenuCardState();
+}
+
+class _MenuCardState extends State<_MenuCard> {
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {},
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () {
+        Navigator.pushNamed(context, '/menu/${widget.title}');
+      },
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -206,7 +252,7 @@ class _MenuCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.asset(image, fit: BoxFit.cover),
+              child: Image.asset(widget.image, fit: BoxFit.cover),
             ),
             Container(
               decoration: BoxDecoration(
@@ -216,7 +262,7 @@ class _MenuCard extends StatelessWidget {
             ),
             Center(
               child: Text(
-                title,
+                widget.title,
                 style: const TextStyle(
                   fontFamily: 'OpenSans',
                   fontWeight: FontWeight.w700,

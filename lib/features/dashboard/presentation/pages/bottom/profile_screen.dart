@@ -122,7 +122,7 @@ class ProfileScreen extends ConsumerWidget {
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
       final url = imagePath.startsWith('http') 
           ? imagePath 
-          : 'http://192.168.1.21:5000$imagePath'; 
+          : 'http://192.168.1.3:5000$imagePath'; 
       
       print('Loading image from: $url'); 
       

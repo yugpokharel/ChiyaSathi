@@ -28,46 +28,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final profilePicture = authState.authEntity?.profilePicture;
 
     return Scaffold(
+      extendBodyBehindAppBar: false, // Prevent body from drawing behind app bar
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        automaticallyImplyLeading: false,
+        title: const Text(''), // Empty title
+        backgroundColor: Colors.white, // Use a solid color
         elevation: 0,
-        title: const Text(
-          'Chiya Sathi',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: GestureDetector(
               onTap: () {
                 setState(() {
-                  _selectedIndex = 2;
+                  _selectedIndex = 2; // Navigate to Profile
                 });
               },
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.orange, width: 2),
-                ),
-                child: ClipOval(
-                  child: profilePicture != null && profilePicture.isNotEmpty
-                      ? _buildDashboardImage(profilePicture)
-                      : Container(
-                          color: Colors.grey.shade200,
-                          child: Icon(
-                            Icons.person,
-                            color: Colors.grey.shade400,
-                          ),
-                        ),
+              child: CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.orange,
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundImage: profilePicture != null && profilePicture.isNotEmpty
+                      ? _getProfileImage(profilePicture)
+                      : null,
+                  child: profilePicture == null || profilePicture.isEmpty
+                      ? Icon(
+                          Icons.person,
+                          color: Colors.grey.shade400,
+                        )
+                      : null,
                 ),
               ),
             ),
           ),
         ],
       ),
-      body: _lstBottomScreen[_selectedIndex],
+      body: _lstBottomScreen[_selectedIndex], // Removed SafeArea from here
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
@@ -90,38 +86,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildDashboardImage(String imagePath) {
+  ImageProvider _getProfileImage(String imagePath) {
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
-      final url = imagePath.startsWith('http') 
-          ? imagePath 
-          : 'http://192.168.1.21:5000$imagePath'; 
-      
-      return Image.network(
-        url,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            color: Colors.grey.shade200,
-            child: Icon(
-              Icons.person,
-              color: Colors.grey.shade400,
-            ),
-          );
-        },
-      );
+      final url = imagePath.startsWith('http')
+          ? imagePath
+          : 'http://192.168.1.3:5000$imagePath';
+      return NetworkImage(url);
     } else if (File(imagePath).existsSync()) {
-      return Image.file(
-        File(imagePath),
-        fit: BoxFit.cover,
-      );
+      return FileImage(File(imagePath));
     } else {
-      return Container(
-        color: Colors.grey.shade200,
-        child: Icon(
-          Icons.person,
-          color: Colors.grey.shade400,
-        ),
-      );
+      // Return a default image provider or handle the error
+      return const AssetImage('assets/images/placeholder.png'); // Make sure you have a placeholder image
     }
   }
 }

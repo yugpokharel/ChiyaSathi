@@ -21,7 +21,7 @@ abstract class AuthRemoteDatasource {
 class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   final http.Client client;
 
-  static const String baseUrl = "http://192.168.1.21:5000/api"; 
+  static const String baseUrl = "http://192.168.1.3:5000/api"; 
 
   AuthRemoteDatasourceImpl({required this.client});
 
@@ -39,13 +39,14 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     final Map<String, dynamic> data = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      final token = data['token'] ?? data['data']?['token'];
+      final token = data['token'];
+      final user = data['data']; // Changed from 'user' to 'data'
       if (token == null) {
         throw Exception('Token not found in response');
       }
       return {
         'token': token,
-        'user': data['data'] ?? data['user']
+        'user': user,
       };
     } else {
       throw Exception(data['message'] ?? 'Login failed');
