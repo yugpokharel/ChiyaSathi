@@ -1,14 +1,20 @@
 import 'package:chiya_sathi/features/menu/data/repositories/menu_repository.dart';
 import 'package:chiya_sathi/features/menu/domain/entities/menu_item.dart';
+import 'package:chiya_sathi/features/menu/presentation/providers/cart_provider.dart';
+import 'package:chiya_sathi/features/menu/presentation/providers/order_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MenuCategoryScreen extends StatelessWidget {
+class MenuCategoryScreen extends ConsumerWidget {
   final String category;
   const MenuCategoryScreen({super.key, required this.category});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final menuItems = MenuRepository().getMenuItemsByCategory(category);
+    final cartItems = ref.watch(cartProvider);
+    final cartNotifier = ref.read(cartProvider.notifier);
+    final totalAmount = cartNotifier.totalAmount;
 
     return Scaffold(
       appBar: AppBar(
@@ -16,27 +22,84 @@ class MenuCategoryScreen extends StatelessWidget {
         backgroundColor: Colors.orange.shade400,
       ),
       body: ListView.builder(
+        padding: const EdgeInsets.only(bottom: 100),
         itemCount: menuItems.length,
         itemBuilder: (context, index) {
           final item = menuItems[index];
-          return MenuItemCard(item: item);
+          final quantity = cartNotifier.getQuantity(item.id);
+          return _MenuItemCard(
+            item: item,
+            quantity: quantity,
+            onAdd: () => cartNotifier.addItem(item),
+            onRemove: () => cartNotifier.removeItem(item),
+          );
         },
       ),
+      bottomSheet: cartItems.isNotEmpty
+          ? Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: () {
+                  // Place the order
+                  ref.read(orderProvider.notifier).placeOrder(
+                        cartItems,
+                        totalAmount,
+                      );
+                  // Clear the cart
+                  cartNotifier.clearCart();
+                  // Navigate to order status
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/order_status',
+                    (route) => false,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange.shade400,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Proceed  •  Rs. ${totalAmount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontFamily: 'OpenSans',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
   }
 }
 
-class MenuItemCard extends StatefulWidget {
+class _MenuItemCard extends StatelessWidget {
   final MenuItem item;
+  final int quantity;
+  final VoidCallback onAdd;
+  final VoidCallback onRemove;
 
-  const MenuItemCard({super.key, required this.item});
-
-  @override
-  State<MenuItemCard> createState() => _MenuItemCardState();
-}
-
-class _MenuItemCardState extends State<MenuItemCard> {
-  int _quantity = 0;
+  const _MenuItemCard({
+    required this.item,
+    required this.quantity,
+    required this.onAdd,
+    required this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -51,16 +114,16 @@ class _MenuItemCardState extends State<MenuItemCard> {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.asset(
-                widget.item.image ?? 'assets/images/placeholder.png',
+                item.image ?? 'assets/images/placeholder.png',
                 width: 80,
                 height: 80,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  return Image.asset(
-                    'assets/images/placeholder.png',
+                  return Container(
                     width: 80,
                     height: 80,
-                    fit: BoxFit.cover,
+                    color: Colors.grey.shade200,
+                    child: Icon(Icons.fastfood, color: Colors.grey.shade400),
                   );
                 },
               ),
@@ -71,7 +134,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.item.name,
+                    item.name,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -79,7 +142,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Rs. ${widget.item.price.toStringAsFixed(2)}',
+                    'Rs. ${item.price.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey.shade700,
@@ -88,35 +151,39 @@ class _MenuItemCardState extends State<MenuItemCard> {
                 ],
               ),
             ),
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.remove_circle_outline),
-                  onPressed: () {
-                    if (_quantity > 0) {
-                      setState(() {
-                        _quantity--;
-                      });
-                    }
-                  },
-                ),
-                Text(
-                  '$_quantity',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.remove_circle_outline,
+                      color: quantity > 0
+                          ? Colors.orange.shade700
+                          : Colors.grey.shade400,
+                    ),
+                    onPressed: quantity > 0 ? onRemove : null,
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add_circle_outline),
-                  onPressed: () {
-                    setState(() {
-                      _quantity++;
-                    });
-                  },
-                ),
-              ],
-            )
+                  Text(
+                    '$quantity',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.add_circle_outline,
+                      color: Colors.orange.shade700,
+                    ),
+                    onPressed: onAdd,
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

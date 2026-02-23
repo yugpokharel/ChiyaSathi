@@ -1,8 +1,12 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:hive/hive.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({super.key});
@@ -14,6 +18,7 @@ class QRScannerScreen extends StatefulWidget {
 class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingObserver {
   late MobileScannerController _scannerController;
   bool _isPermissionGranted = false;
+  bool _isSimulator = false;
 
   @override
   void initState() {
@@ -23,6 +28,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
       detectionSpeed: DetectionSpeed.noDuplicates,
     );
     _requestCameraPermission();
+    _checkIfSimulator();
   }
 
   @override
@@ -30,6 +36,24 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
     if (state == AppLifecycleState.resumed) {
       // Re-check permission when app comes back from background
       _requestCameraPermission();
+    }
+  }
+
+  Future<void> _checkIfSimulator() async {
+    if (kIsWeb) {
+      setState(() {
+        _isSimulator = false;
+      });
+      return;
+    }
+    final deviceInfo = DeviceInfoPlugin();
+    final isSimulator = await (Platform.isIOS
+        ? deviceInfo.iosInfo.then((i) => !i.isPhysicalDevice)
+        : deviceInfo.androidInfo.then((i) => !i.isPhysicalDevice));
+    if (mounted) {
+      setState(() {
+        _isSimulator = isSimulator;
+      });
     }
   }
 
@@ -54,35 +78,39 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
     if (barcodes.isNotEmpty) {
       final String? code = barcodes.first.rawValue;
       if (code != null) {
-        // Stop scanning and persist the scanned table id
-        _scannerController.stop();
-        try {
-          final box = Hive.box('authBox');
-          box.put('tableId', code);
-          box.put('tableScannedAt', DateTime.now().toIso8601String());
-        } catch (_) {}
-
-        // Show confirmation and return to previous screen so homepage can react
-        if (!mounted) return;
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            title: const Text('Table Identified'),
-            content: Text('Table: $code'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // close dialog
-                  Navigator.of(context).pop(); // close scanner
-                },
-                child: const Text('Proceed'),
-              ),
-            ],
-          ),
-        );
+        _handleScannedCode(code);
       }
     }
+  }
+
+  void _handleScannedCode(String code) {
+    // Stop scanning and persist the scanned table id
+    _scannerController.stop();
+    try {
+      final box = Hive.box('authBox');
+      box.put('tableId', code);
+      box.put('tableScannedAt', DateTime.now().toIso8601String());
+    } catch (_) {}
+
+    // Show confirmation and return to previous screen so homepage can react
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Table Identified'),
+        content: Text('Table: $code'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // close dialog
+              Navigator.of(context).pop(); // close scanner
+            },
+            child: const Text('Proceed'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _scanImageFromGallery() async {
@@ -90,6 +118,10 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
+      if (_isSimulator) {
+        _showSimulatorError();
+        return;
+      }
       final BarcodeCapture? capture = await _scannerController.analyzeImage(image.path);
       if (capture != null) {
         _onDetect(capture);
@@ -97,6 +129,23 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
         _showScanError();
       }
     }
+  }
+
+  void _showSimulatorError() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Unsupported Operation'),
+        content: const Text('Scanning from gallery is not supported on the simulator.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showScanError() {
@@ -116,6 +165,41 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
     );
   }
 
+  Future<void> _showManualEntryDialog() async {
+    final TextEditingController controller = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Manual Table Entry'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Enter Table ID',
+              hintText: 'e.g., Table 5',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (controller.text.isNotEmpty) {
+                  Navigator.of(context).pop();
+                  _handleScannedCode(controller.text);
+                }
+              },
+              child: const Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,6 +213,12 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
             onPressed: _scanImageFromGallery,
             tooltip: 'Scan from Gallery',
           ),
+          if (_isSimulator)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: _showManualEntryDialog,
+              tooltip: 'Manual Entry',
+            ),
         ],
       ),
       extendBodyBehindAppBar: true,
@@ -182,7 +272,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withAlpha(128),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Text(

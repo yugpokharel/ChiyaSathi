@@ -6,6 +6,7 @@ import 'package:chiya_sathi/features/splash/presentation/pages/splash_screen.dar
 import 'package:chiya_sathi/features/qr_scanner/presentation/pages/qr_scanner_screen.dart';
 import 'package:chiya_sathi/app/theme/app_theme.dart';
 import 'package:chiya_sathi/features/menu/presentation/pages/menu_category_screen.dart';
+import 'package:chiya_sathi/features/menu/presentation/pages/order_status_screen.dart';
 import 'package:flutter/material.dart';
 
 class MyApp extends StatelessWidget {
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
         '/menu/Coffee': (context) => const MenuCategoryScreen(category: 'Coffee'),
         '/menu/Cigarette': (context) => const MenuCategoryScreen(category: 'Cigarette'),
         '/menu/Snacks': (context) => const MenuCategoryScreen(category: 'Snacks'),
+        '/order_status': (context) => const OrderStatusScreen(),
       },
     );
   }
