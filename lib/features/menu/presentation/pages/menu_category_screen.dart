@@ -1,3 +1,4 @@
+import 'package:chiya_sathi/core/services/notification_service.dart';
 import 'package:chiya_sathi/features/menu/data/repositories/menu_repository.dart';
 import 'package:chiya_sathi/features/menu/domain/entities/menu_item.dart';
 import 'package:chiya_sathi/features/menu/presentation/providers/cart_provider.dart';
@@ -58,6 +59,13 @@ class MenuCategoryScreen extends ConsumerWidget {
                       );
                   // Clear the cart
                   cartNotifier.clearCart();
+
+                  // Show notification
+                  NotificationService().showOrderNotification(
+                    title: 'Chiya Sathi',
+                    body: 'Your order is being prepared! Please wait.',
+                  );
+
                   // Navigate to order status
                   Navigator.pushNamedAndRemoveUntil(
                     context,

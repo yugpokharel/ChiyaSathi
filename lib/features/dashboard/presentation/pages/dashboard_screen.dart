@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_model_provider.dart';
+import 'package:chiya_sathi/features/menu/presentation/providers/order_provider.dart';
 import 'package:chiya_sathi/features/dashboard/presentation/pages/bottom/home_screen.dart';
 import 'package:chiya_sathi/features/dashboard/presentation/pages/bottom/menu_screen.dart';
 import 'package:chiya_sathi/features/dashboard/presentation/pages/bottom/profile_screen.dart';
@@ -26,44 +27,83 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
     final profilePicture = authState.authEntity?.profilePicture;
+    final order = ref.watch(orderProvider);
 
     return Scaffold(
-      extendBodyBehindAppBar: false, // Prevent body from drawing behind app bar
+      extendBodyBehindAppBar: false,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text(''), // Empty title
-        backgroundColor: Colors.white, // Use a solid color
+        backgroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedIndex = 2; // Navigate to Profile
-                });
-              },
+        titleSpacing: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12.0),
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedIndex = 2; // Navigate to Profile
+              });
+            },
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.orange,
               child: CircleAvatar(
-                radius: 24,
-                backgroundColor: Colors.orange,
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundImage: profilePicture != null && profilePicture.isNotEmpty
-                      ? _getProfileImage(profilePicture)
-                      : null,
-                  child: profilePicture == null || profilePicture.isEmpty
-                      ? Icon(
-                          Icons.person,
-                          color: Colors.grey.shade400,
-                        )
-                      : null,
-                ),
+                radius: 18,
+                backgroundImage:
+                    profilePicture != null && profilePicture.isNotEmpty
+                        ? _getProfileImage(profilePicture)
+                        : null,
+                child: profilePicture == null || profilePicture.isEmpty
+                    ? Icon(
+                        Icons.person,
+                        size: 20,
+                        color: Colors.grey.shade400,
+                      )
+                    : null,
               ),
             ),
           ),
+        ),
+        title: const Text(''),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
+            onPressed: () {
+              // Notification action — can be expanded later
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('No new notifications'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
+            tooltip: 'Notifications',
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.check_circle_outline,
+              color: order.hasActiveOrder
+                  ? Colors.green
+                  : Colors.grey.shade400,
+            ),
+            onPressed: () {
+              if (order.hasActiveOrder) {
+                Navigator.pushNamed(context, '/order_status');
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('No active orders'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              }
+            },
+            tooltip: 'View Your Order',
+          ),
+          const SizedBox(width: 4),
         ],
       ),
-      body: _lstBottomScreen[_selectedIndex], // Removed SafeArea from here
+      body: _lstBottomScreen[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
