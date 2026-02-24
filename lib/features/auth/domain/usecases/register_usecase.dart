@@ -29,14 +29,13 @@ class RegisterUsecaseParams extends Equatable {
 }
 
 // Usecase
-class RegisterUsecase implements UsecaseWithParams<bool, RegisterUsecaseParams> {
+class RegisterUsecase implements Usecase<bool, RegisterUsecaseParams> {
   final IAuthRepository _authRepository;
 
-  RegisterUsecase({required IAuthRepository authRepository})
-      : _authRepository = authRepository;
+  RegisterUsecase(this._authRepository);
 
   @override
-  Future<Either<Failure, bool>> call(RegisterUsecaseParams params) {
+  Future<Either<Failure, bool>> call(RegisterUsecaseParams params) async {
     final entity = AuthEntity(
       fullName: params.fullName,
       username: params.username,
@@ -46,6 +45,6 @@ class RegisterUsecase implements UsecaseWithParams<bool, RegisterUsecaseParams> 
       token: null,
       profilePicture: params.profilePicture?.path,
     );
-    return _authRepository.register(entity);
+    return await _authRepository.register(entity);
   }
 }

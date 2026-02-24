@@ -26,7 +26,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
-    final profilePicture = authState.authEntity?.profilePicture;
+    final profilePicture = authState.user?.profilePicture;
     final order = ref.watch(orderProvider);
 
     return Scaffold(

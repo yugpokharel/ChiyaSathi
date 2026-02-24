@@ -107,15 +107,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final authState = ref.watch(authViewModelProvider);
 
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      if (next.status == AuthStatus.error && next.errorMessage != null) {
+      if (next.error != null) {
         showMySnackBar(
           context: context,
-          message: next.errorMessage!,
+          message: next.error!,
           color: Colors.red,
         );
       }
 
-      if (next.status == AuthStatus.registered) {
+      if (next.user == null && !next.isLoading && next.error == null && previous?.isLoading == true) {
         showMySnackBar(
           context: context,
           message: "Signup Successful",
@@ -190,14 +190,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: authState.status == AuthStatus.loading ? null : _register,
+                  onPressed: authState.isLoading ? null : _register,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange.shade600,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: authState.status == AuthStatus.loading
+                  child: authState.isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
                           'SIGN UP',

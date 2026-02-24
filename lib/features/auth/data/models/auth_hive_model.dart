@@ -2,8 +2,9 @@ import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
 import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
 import 'package:hive/hive.dart';
 
+part 'auth_hive_model.g.dart';
 
-@HiveType(typeId: HiveTableConstants.authtypeId)
+@HiveType(typeId: HiveTableConstants.authTypeId)
 class AuthHiveModel extends HiveObject {
   @HiveField(0)
   final String id;
@@ -27,7 +28,7 @@ class AuthHiveModel extends HiveObject {
   final String? batchId;
 
   @HiveField(7)
-  final String? password; // added to store locally if needed
+  final String? password; 
 
   AuthHiveModel({
     required this.id,

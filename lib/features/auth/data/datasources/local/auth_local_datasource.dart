@@ -13,12 +13,13 @@ abstract class AuthLocalDatasource {
 class AuthLocalDatasourceImpl implements AuthLocalDatasource {
   final Box box;
   static const String _tokenKey = 'auth_token';
+  static const String _userKey = 'auth_user';
 
   AuthLocalDatasourceImpl(this.box);
 
   @override
   Future<void> saveUser(AuthHiveModel model) async {
-    await box.put(HiveTableConstants.authBoxKey, model);
+    await box.put(_userKey, model);
   }
 
   @override
@@ -28,7 +29,7 @@ class AuthLocalDatasourceImpl implements AuthLocalDatasource {
 
   @override
   Future<AuthHiveModel?> getCurrentUser() async {
-    return box.get(HiveTableConstants.authBoxKey) as AuthHiveModel?;
+    return box.get(_userKey) as AuthHiveModel?;
   }
 
   @override
@@ -38,7 +39,7 @@ class AuthLocalDatasourceImpl implements AuthLocalDatasource {
 
   @override
   Future<void> clearToken() async {
-    await box.delete(HiveTableConstants.authBoxKey);
+    await box.delete(_userKey);
     await box.delete(_tokenKey);
   }
 }

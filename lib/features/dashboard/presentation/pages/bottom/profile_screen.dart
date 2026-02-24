@@ -9,7 +9,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authViewModelProvider);
-    final authEntity = authState.authEntity;
+    final authEntity = authState.user;
 
     print('Auth Entity: $authEntity');
     print('Profile Picture: ${authEntity?.profilePicture}');

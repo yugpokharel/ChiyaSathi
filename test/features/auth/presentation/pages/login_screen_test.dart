@@ -1,8 +1,7 @@
-import 'package:chiya_sathi/features/auth/presentation/view_model/auth_usecase_providers.dart';
+import 'package:chiya_sathi/features/auth/presentation/providers/auth_usecase_provider.dart';
 import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_model_provider.dart';
 import 'package:chiya_sathi/features/auth/domain/usecases/login_usecase.dart';
 import 'package:chiya_sathi/features/auth/domain/usecases/register_usecase.dart';
-import 'package:chiya_sathi/features/auth/presentation/state/auth_state.dart';
 import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
 import 'package:chiya_sathi/core/error/failures.dart';
 import 'package:dartz/dartz.dart';
@@ -35,8 +34,8 @@ void main() {
     mockRegisterUsecase = MockRegisterUsecase();
 
     container = ProviderContainer(overrides: [
-      loginUsecaseProvider.overrideWithValue(mockLoginUsecase),
-      registerUsecaseProvider.overrideWithValue(mockRegisterUsecase),
+        loginUseCaseProvider.overrideWith((ref) => mockLoginUsecase),
+        registerUseCaseProvider.overrideWith((ref) => mockRegisterUsecase),
     ]);
   });
 
@@ -56,8 +55,9 @@ void main() {
   group('AuthViewModel Unit Tests', () {
     test('initial state should be AuthStatus.initial', () {
       final state = container.read(authViewModelProvider);
-      expect(state.status, AuthStatus.initial);
-      expect(state.authEntity, isNull);
+      expect(state.isLoading, false);
+      expect(state.user, isNull);
+      expect(state.error, isNull);
     });
 
     test('login success → should emit authenticated with user', () async {
@@ -68,8 +68,9 @@ void main() {
           .login(email: tEmail, password: tPassword);
 
       final state = container.read(authViewModelProvider);
-      expect(state.status, AuthStatus.authenticated);
-      expect(state.authEntity, tUser);
+      expect(state.isLoading, false);
+      expect(state.user, tUser);
+      expect(state.error, isNull);
       verify(() => mockLoginUsecase(any())).called(1);
     });
 
@@ -81,8 +82,9 @@ void main() {
           .login(email: tEmail, password: tPassword);
 
       final state = container.read(authViewModelProvider);
-      expect(state.status, AuthStatus.error);
-      expect(state.errorMessage, 'Login failed');
+      expect(state.isLoading, false);
+      expect(state.user, isNull);
+      expect(state.error, 'Login failed');
     });
 
     test('register success → should emit registered state only', () async {
@@ -99,8 +101,9 @@ void main() {
           );
 
       final state = container.read(authViewModelProvider);
-      expect(state.status, AuthStatus.registered);
-      expect(state.authEntity, isNull);
+      expect(state.isLoading, false);
+      expect(state.user, isNull);
+      expect(state.error, isNull);
       verify(() => mockRegisterUsecase(any())).called(1);
     });
 
@@ -118,8 +121,9 @@ void main() {
           );
 
       final state = container.read(authViewModelProvider);
-      expect(state.status, AuthStatus.error);
-      expect(state.errorMessage, 'Signup failed');
+      expect(state.isLoading, false);
+      expect(state.user, isNull);
+      expect(state.error, 'Signup failed');
     });
   });
 }

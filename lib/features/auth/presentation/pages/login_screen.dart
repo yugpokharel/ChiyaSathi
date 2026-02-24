@@ -55,15 +55,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authViewModelProvider);
 
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      if (next.status == AuthStatus.error && next.errorMessage != null) {
+      if (next.error != null) {
         showMySnackBar(
           context: context,
-          message: next.errorMessage!,
+          message: next.error!,
           color: Colors.red,
         );
       }
 
-      if (next.status == AuthStatus.authenticated) {
+      if (next.user != null && !next.isLoading) {
         showMySnackBar(
           context: context,
           message: "Login Successful",
@@ -152,14 +152,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed:
-                      authState.status == AuthStatus.loading ? null : _login,
+                      authState.isLoading ? null : _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange.shade600,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                     elevation: 0,
                   ),
-                  child: authState.status == AuthStatus.loading
+                  child: authState.isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('SIGN IN',
                           style: TextStyle(fontWeight: FontWeight.bold)),

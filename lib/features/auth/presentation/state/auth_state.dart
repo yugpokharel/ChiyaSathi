@@ -1,31 +1,28 @@
 import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
 import 'package:equatable/equatable.dart';
 
-enum AuthStatus { initial, loading, registered, authenticated, error }
-
 class AuthState extends Equatable {
-  final AuthStatus status;
-  final AuthEntity? authEntity;
-  final String? errorMessage;
+  final bool isLoading;
+  final String? error;
+  final AuthEntity? user;
 
   const AuthState({
-    this.status = AuthStatus.initial,
-    this.authEntity,
-    this.errorMessage,
+    this.isLoading = false,
+    this.error,
+    this.user,
   });
-  //copywith
-  AuthState copyWith({
-    AuthStatus? status,
-    AuthEntity? authEntity,
-    String? errorMessage,
-  }) {
-    return AuthState(
-      status: status ?? this.status,
-      authEntity: authEntity ?? this.authEntity,
-      errorMessage: errorMessage ?? this.errorMessage,
-    );
-  }
+
+  const AuthState.unauthenticated()
+      : this(isLoading: false, user: null, error: null);
+
+  const AuthState.loading() : this(isLoading: true, user: null, error: null);
+
+  const AuthState.authenticated(AuthEntity user)
+      : this(isLoading: false, user: user, error: null);
+
+  const AuthState.error(String error)
+      : this(isLoading: false, user: null, error: error);
 
   @override
-  List<Object?> get props => [status, authEntity, errorMessage];
+  List<Object?> get props => [isLoading, error, user];
 }

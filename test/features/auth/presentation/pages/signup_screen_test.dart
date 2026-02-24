@@ -14,7 +14,7 @@ void main() {
 
   setUp(() {
     mockRepository = MockAuthRepository();
-    usecase = RegisterUsecase(authRepository: mockRepository);
+    usecase = RegisterUsecase(mockRepository);
   });
 
   setUpAll(() {

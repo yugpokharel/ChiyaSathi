@@ -18,14 +18,13 @@ class LoginUsecaseParams extends Equatable {
   List<Object?> get props => [email, password];
 }
 
-class LoginUsecase implements UsecaseWithParams<AuthEntity, LoginUsecaseParams> {
+class LoginUsecase implements Usecase<AuthEntity, LoginUsecaseParams> {
   final IAuthRepository _authRepository;
 
-  LoginUsecase({required IAuthRepository authRepository})
-      : _authRepository = authRepository;
+  LoginUsecase(this._authRepository);
 
   @override
-  Future<Either<Failure, AuthEntity>> call(LoginUsecaseParams params) {
-    return _authRepository.login(params.email, params.password);
+  Future<Either<Failure, AuthEntity>> call(LoginUsecaseParams params) async {
+    return await _authRepository.login(params.email, params.password);
   }
 }

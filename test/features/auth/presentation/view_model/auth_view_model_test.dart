@@ -3,8 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:chiya_sathi/features/auth/presentation/view_model/auth_usecase_providers.dart';
-import 'package:chiya_sathi/features/auth/presentation/state/auth_state.dart';
+import 'package:chiya_sathi/features/auth/presentation/providers/auth_usecase_provider.dart';
 import 'package:chiya_sathi/features/auth/domain/usecases/login_usecase.dart';
 import 'package:chiya_sathi/features/auth/domain/usecases/register_usecase.dart';
 import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
@@ -53,8 +52,8 @@ void main() {
 
     container = ProviderContainer(
       overrides: [
-        loginUsecaseProvider.overrideWithValue(mockLoginUsecase),
-        registerUsecaseProvider.overrideWithValue(mockRegisterUsecase),
+        loginUseCaseProvider.overrideWith((ref) => mockLoginUsecase),
+        registerUseCaseProvider.overrideWith((ref) => mockRegisterUsecase),
       ],
     );
   });
@@ -66,8 +65,9 @@ void main() {
   group('AuthViewModel Unit Tests', () {
     test('initial state', () {
       final state = container.read(authViewModelProvider);
-      expect(state.status, AuthStatus.initial);
-      expect(state.authEntity, isNull);
+      expect(state.isLoading, false);
+      expect(state.user, isNull);
+      expect(state.error, isNull);
     });
 
     test('login success', () async {
@@ -80,8 +80,9 @@ void main() {
 
       final state = container.read(authViewModelProvider);
 
-      expect(state.status, AuthStatus.authenticated);
-      expect(state.authEntity, tUser);
+      expect(state.isLoading, false);
+      expect(state.user, tUser);
+      expect(state.error, isNull);
 
       verify(() => mockLoginUsecase(any())).called(1);
     });
@@ -96,8 +97,9 @@ void main() {
 
       final state = container.read(authViewModelProvider);
 
-      expect(state.status, AuthStatus.error);
-      expect(state.errorMessage, 'Login failed');
+      expect(state.isLoading, false);
+      expect(state.user, isNull);
+      expect(state.error, 'Login failed');
     });
 
     test('register success', () async {
@@ -115,8 +117,9 @@ void main() {
 
       final state = container.read(authViewModelProvider);
 
-      expect(state.status, AuthStatus.registered);
-      expect(state.authEntity, isNull);
+      expect(state.isLoading, false);
+      expect(state.user, isNull);
+      expect(state.error, isNull);
 
       verify(() => mockRegisterUsecase(any())).called(1);
     });
@@ -130,8 +133,8 @@ void main() {
       final future = notifier.login(email: tEmail, password: tPassword);
 
       expect(
-        container.read(authViewModelProvider).status,
-        AuthStatus.loading,
+        container.read(authViewModelProvider).isLoading,
+        true,
       );
 
       await future;

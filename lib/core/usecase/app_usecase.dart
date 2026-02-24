@@ -1,10 +1,11 @@
-import 'package:chiya_sathi/core/error/failures.dart';
 import 'package:dartz/dartz.dart';
 
-abstract interface class UsecaseWithParams<SuccessType, Params> {
-  Future<Either<Failure, SuccessType>> call(Params params);
+import '../error/failures.dart';
+
+abstract class Usecase<Type, Params> {
+  Future<Either<Failure, Type>> call(Params params);
 }
 
-abstract interface class UsecaseWithoutParams<SuccessType> {
-  Future<Either<Failure, SuccessType>> call();
+abstract class UsecaseWithoutParams<Type> {
+  Future<Either<Failure, Type>> call();
 }
