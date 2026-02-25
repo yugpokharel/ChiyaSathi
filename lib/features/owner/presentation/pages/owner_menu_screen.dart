@@ -105,7 +105,9 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('Add Menu Item',
               style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Form(
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: Form(
             key: formKey,
             child: SingleChildScrollView(
             child: Column(
@@ -125,7 +127,6 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
                   },
                   child: Container(
                     height: 120,
-                    width: double.infinity,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(12),
@@ -137,7 +138,7 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
                             child: Image.file(
                               pickedImage!,
                               fit: BoxFit.cover,
-                              width: double.infinity,
+                              height: 120,
                             ),
                           )
                         : Column(
@@ -204,6 +205,7 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
             ),
             ),
           ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
@@ -260,7 +262,9 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('Edit Menu Item',
               style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Form(
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: Form(
             key: formKey,
             child: SingleChildScrollView(
             child: Column(
@@ -280,7 +284,6 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
                   },
                   child: Container(
                     height: 120,
-                    width: double.infinity,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(12),
@@ -292,7 +295,7 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
                             child: Image.file(
                               pickedImage!,
                               fit: BoxFit.cover,
-                              width: double.infinity,
+                              height: 120,
                             ),
                           )
                         : item.image != null && item.image!.isNotEmpty
@@ -301,7 +304,7 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
                                 child: Image.network(
                                   item.image!,
                                   fit: BoxFit.cover,
-                                  width: double.infinity,
+                                  height: 120,
                                   errorBuilder: (_, __, ___) => Column(
                                     mainAxisAlignment:
                                         MainAxisAlignment.center,
@@ -381,6 +384,7 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
               ],
             ),
             ),
+          ),
           ),
           actions: [
             TextButton(
