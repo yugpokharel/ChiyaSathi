@@ -1,4 +1,3 @@
-import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
 import 'package:chiya_sathi/features/auth/data/models/auth_hive_model.dart';
 import 'package:hive/hive.dart';
 

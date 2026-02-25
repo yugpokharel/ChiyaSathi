@@ -1,7 +1,6 @@
 import 'package:chiya_sathi/core/network/network_info.dart';
 import 'package:chiya_sathi/features/auth/data/datasources/local/auth_local_datasource.dart';
 import 'package:chiya_sathi/features/auth/data/datasources/remote/auth_remote_datasources.dart';
-import 'package:chiya_sathi/features/auth/data/models/auth_hive_model.dart';
 import 'package:chiya_sathi/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:chiya_sathi/features/auth/domain/repositories/auth_repository.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
