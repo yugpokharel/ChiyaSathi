@@ -82,17 +82,20 @@ class _MenuCategoryScreenState extends ConsumerState<MenuCategoryScreen> {
                   final box = Hive.box(HiveTableConstants.authBox);
                   final tableId = box.get('tableId', defaultValue: '?');
 
-                  // Place order in customer's local state
+                  // Place order via API (visible to owner)
+                  final orderId =
+                      await ref.read(shopOrdersProvider.notifier).placeOrder(
+                            tableId: tableId,
+                            items: cartItems,
+                            totalAmount: totalAmount,
+                          );
+
+                  // Place order in customer's local state with API order ID
                   ref.read(orderProvider.notifier).placeOrder(
                         cartItems,
                         totalAmount,
-                      );
-
-                  // Place order via API (visible to owner)
-                  await ref.read(shopOrdersProvider.notifier).placeOrder(
+                        orderId: orderId,
                         tableId: tableId,
-                        items: cartItems,
-                        totalAmount: totalAmount,
                       );
 
                   // Clear the cart
@@ -101,7 +104,7 @@ class _MenuCategoryScreenState extends ConsumerState<MenuCategoryScreen> {
                   // Show notification
                   NotificationService().showOrderNotification(
                     title: 'Chiya Sathi',
-                    body: 'Your order is being prepared! Please wait.',
+                    body: 'Your order has been placed! Waiting for confirmation.',
                   );
 
                   // Navigate to order status

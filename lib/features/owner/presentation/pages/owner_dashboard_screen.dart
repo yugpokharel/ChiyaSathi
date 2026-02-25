@@ -8,6 +8,7 @@ import 'package:chiya_sathi/features/owner/presentation/pages/owner_orders_scree
 import 'package:chiya_sathi/features/owner/presentation/pages/owner_menu_screen.dart';
 import 'package:chiya_sathi/features/owner/presentation/pages/owner_profile_screen.dart';
 import 'dart:io';
+import 'dart:async';
 
 class OwnerDashboardScreen extends ConsumerStatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -19,6 +20,7 @@ class OwnerDashboardScreen extends ConsumerStatefulWidget {
 
 class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
   int _selectedIndex = 0;
+  Timer? _pollTimer;
 
   final List<Widget> _screens = const [
     OwnerHomeTab(),
@@ -34,6 +36,16 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
     Future.microtask(() {
       ref.read(shopOrdersProvider.notifier).fetchOrders();
     });
+    // Poll for new orders every 10 seconds
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      ref.read(shopOrdersProvider.notifier).fetchOrders();
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   @override

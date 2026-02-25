@@ -23,6 +23,11 @@ abstract class OrderRemoteDatasource {
     required String token,
     required String orderId,
   });
+
+  Future<Map<String, dynamic>> getOrderById({
+    required String token,
+    required String orderId,
+  });
 }
 
 class OrderRemoteDatasourceImpl implements OrderRemoteDatasource {
@@ -133,6 +138,29 @@ class OrderRemoteDatasourceImpl implements OrderRemoteDatasource {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       throw ServerException(
           message: data['message'] ?? 'Failed to delete order');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getOrderById({
+    required String token,
+    required String orderId,
+  }) async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/orders/$orderId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    ).timeout(const Duration(seconds: 10));
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode == 200) {
+      return data['data'] ?? data;
+    } else {
+      throw ServerException(
+          message: data['message'] ?? 'Failed to fetch order');
     }
   }
 }

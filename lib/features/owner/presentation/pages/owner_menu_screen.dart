@@ -127,18 +127,17 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
                   },
                   child: Container(
                     height: 120,
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     child: pickedImage != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
+                        ? SizedBox.expand(
                             child: Image.file(
                               pickedImage!,
                               fit: BoxFit.cover,
-                              height: 120,
                             ),
                           )
                         : Column(
@@ -284,27 +283,24 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
                   },
                   child: Container(
                     height: 120,
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     child: pickedImage != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
+                        ? SizedBox.expand(
                             child: Image.file(
                               pickedImage!,
                               fit: BoxFit.cover,
-                              height: 120,
                             ),
                           )
                         : item.image != null && item.image!.isNotEmpty
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
+                            ? SizedBox.expand(
                                 child: Image.network(
                                   item.image!,
                                   fit: BoxFit.cover,
-                                  height: 120,
                                   errorBuilder: (_, __, ___) => Column(
                                     mainAxisAlignment:
                                         MainAxisAlignment.center,
