@@ -70,7 +70,10 @@ class MenuNotifier extends StateNotifier<MenuState> {
 
   /// Fetch menu items from API; fall back to static data
   Future<void> fetchMenu() async {
-    state = state.copyWith(isLoading: true, error: null);
+    // Only show loading spinner if we have no items yet
+    if (state.items.isEmpty) {
+      state = state.copyWith(isLoading: true, error: null);
+    }
 
     final token = _token;
     if (token == null) {
@@ -84,17 +87,19 @@ class MenuNotifier extends StateNotifier<MenuState> {
       final items = list.map((j) => MenuItem.fromJson(j)).toList();
 
       if (items.isEmpty) {
-        // API returned empty → use fallback
-        state = MenuState(items: MenuRepository.fallbackItems);
+        // API returned empty → keep current items or use fallback
+        if (state.items.isEmpty) {
+          state = MenuState(items: MenuRepository.fallbackItems);
+        }
       } else {
         state = MenuState(items: items);
       }
     } catch (_) {
-      // Network error → use fallback
-      state = MenuState(
-        items: MenuRepository.fallbackItems,
-        error: 'Could not load menu from server. Showing default menu.',
-      );
+      // Network/API error → use fallback only if we have nothing
+      if (state.items.isEmpty) {
+        state = MenuState(items: MenuRepository.fallbackItems);
+      }
+      // Otherwise keep current items — don't wipe them on a failed refresh
     }
   }
 
