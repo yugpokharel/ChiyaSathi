@@ -67,15 +67,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         return;
       }
 
-      if (_selectedImage == null) {
-        showMySnackBar(
-          context: context,
-          message: "Please select a profile picture",
-          color: Colors.red,
-        );
-        return;
-      }
-
       // Save owner café details to Hive
       if (_isOwner) {
         if (cafeNameController.text.trim().isEmpty ||
@@ -370,11 +361,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.image_not_supported,
+                      Icon(Icons.add_a_photo_outlined,
                           size: 40, color: Colors.grey.shade400),
                       const SizedBox(height: 8),
                       Text(
-                        'Tap to select a picture',
+                        'Tap to select a picture (optional)',
                         style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                       ),
                     ],

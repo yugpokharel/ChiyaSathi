@@ -18,6 +18,8 @@ abstract class AuthRemoteDatasource {
   });
 
   Future<AuthEntity> getCurrentUser(String token);
+
+  Future<String> updateProfilePicture(String token, File image);
 }
 
 class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
@@ -114,6 +116,32 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       return AuthEntity.fromJson(data['data']);
     } else {
       throw Exception('Failed to get user profile');
+    }
+  }
+
+  @override
+  Future<String> updateProfilePicture(String token, File image) async {
+    final request = http.MultipartRequest(
+      'PUT',
+      Uri.parse('$baseUrl/auth/profile-picture'),
+    );
+
+    request.headers['Authorization'] = 'Bearer $token';
+
+    request.files.add(
+      await http.MultipartFile.fromPath('profilePicture', image.path),
+    );
+
+    final response = await request.send().timeout(const Duration(seconds: 10));
+    final responseBody = await response.stream.bytesToString();
+    final Map<String, dynamic> data = jsonDecode(responseBody);
+
+    if (response.statusCode == 200) {
+      return data['data']?['profilePicture'] ?? data['profilePicture'] ?? '';
+    } else {
+      throw ServerException(
+        message: data['message'] ?? 'Failed to update profile picture',
+      );
     }
   }
 }

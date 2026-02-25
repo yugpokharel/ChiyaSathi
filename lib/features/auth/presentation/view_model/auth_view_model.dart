@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:chiya_sathi/features/auth/domain/repositories/auth_repository.dart';
 import 'package:chiya_sathi/features/auth/domain/usecases/login_usecase.dart';
 import 'package:chiya_sathi/features/auth/domain/usecases/register_usecase.dart';
 import 'package:chiya_sathi/features/auth/presentation/state/auth_state.dart';
@@ -7,8 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class AuthViewModel extends StateNotifier<AuthState> {
   final LoginUsecase _loginUsecase;
   final RegisterUsecase _registerUsecase;
+  final IAuthRepository _authRepository;
 
-  AuthViewModel(this._loginUsecase, this._registerUsecase)
+  AuthViewModel(this._loginUsecase, this._registerUsecase, this._authRepository)
       : super(const AuthState.unauthenticated());
 
   Future<void> login({
@@ -59,6 +61,23 @@ class AuthViewModel extends StateNotifier<AuthState> {
         }
 
         state = const AuthState.unauthenticated();
+      },
+    );
+  }
+
+  Future<bool> updateProfilePicture(File image) async {
+    final currentUser = state.user;
+    if (currentUser == null) return false;
+
+    final result = await _authRepository.updateProfilePicture(image);
+
+    return result.fold(
+      (failure) => false,
+      (newUrl) {
+        state = AuthState.authenticated(
+          currentUser.copyWith(profilePicture: newUrl),
+        );
+        return true;
       },
     );
   }

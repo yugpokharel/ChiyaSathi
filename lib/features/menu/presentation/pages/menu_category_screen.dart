@@ -164,20 +164,37 @@ class _MenuItemCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                item.image ?? 'assets/images/placeholder.png',
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 80,
-                    height: 80,
-                    color: Colors.grey.shade200,
-                    child: Icon(Icons.fastfood, color: Colors.grey.shade400),
-                  );
-                },
-              ),
+              child: item.image != null && item.image!.startsWith('http')
+                  ? Image.network(
+                      item.image!,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 80,
+                          height: 80,
+                          color: Colors.grey.shade200,
+                          child: Icon(Icons.fastfood,
+                              color: Colors.grey.shade400),
+                        );
+                      },
+                    )
+                  : Image.asset(
+                      item.image ?? 'assets/images/placeholder.png',
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 80,
+                          height: 80,
+                          color: Colors.grey.shade200,
+                          child: Icon(Icons.fastfood,
+                              color: Colors.grey.shade400),
+                        );
+                      },
+                    ),
             ),
             const SizedBox(width: 16),
             Expanded(

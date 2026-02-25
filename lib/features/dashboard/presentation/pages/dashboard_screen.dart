@@ -133,7 +133,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
       final url = imagePath.startsWith('http')
           ? imagePath
-          : 'http://192.168.1.3:5000$imagePath';
+          : 'http://192.168.1.5:5000$imagePath';
       return NetworkImage(url);
     } else if (File(imagePath).existsSync()) {
       return FileImage(File(imagePath));

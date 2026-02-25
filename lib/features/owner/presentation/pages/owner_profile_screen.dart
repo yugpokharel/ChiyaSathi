@@ -4,12 +4,62 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
 import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_model_provider.dart';
 import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
-class OwnerProfileScreen extends ConsumerWidget {
+class OwnerProfileScreen extends ConsumerStatefulWidget {
   const OwnerProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OwnerProfileScreen> createState() => _OwnerProfileScreenState();
+}
+
+class _OwnerProfileScreenState extends ConsumerState<OwnerProfileScreen> {
+  bool _isUploadingPhoto = false;
+  final ImagePicker _imagePicker = ImagePicker();
+
+  Future<void> _pickAndUploadPhoto() async {
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      if (pickedFile == null) return;
+
+      setState(() => _isUploadingPhoto = true);
+
+      final success = await ref
+          .read(authViewModelProvider.notifier)
+          .updateProfilePicture(File(pickedFile.path));
+
+      if (mounted) {
+        setState(() => _isUploadingPhoto = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? 'Profile picture updated!'
+                : 'Failed to update profile picture'),
+            backgroundColor: success ? Colors.green : Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploadingPhoto = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
     final user = authState.user;
     final box = Hive.box(HiveTableConstants.authBox);
@@ -54,7 +104,10 @@ class OwnerProfileScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            _buildProfilePicture(user.profilePicture),
+                            _buildProfilePicture(
+                              user.profilePicture,
+                              showEditButton: true,
+                            ),
                             const SizedBox(height: 14),
                             Text(
                               user.fullName,
@@ -236,29 +289,61 @@ class OwnerProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfilePicture(String? path) {
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 3),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(40),
-            blurRadius: 12,
-            spreadRadius: 2,
+  Widget _buildProfilePicture(String? path, {bool showEditButton = false}) {
+    return GestureDetector(
+      onTap: showEditButton ? _pickAndUploadPhoto : null,
+      child: Stack(
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(40),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: _isUploadingPhoto
+                  ? Container(
+                      color: Colors.white,
+                      child: const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : path != null && path.isNotEmpty
+                      ? _buildImage(path)
+                      : Container(
+                          color: Colors.white,
+                          child: Icon(Icons.person,
+                              size: 50, color: Colors.orange.shade300),
+                        ),
+            ),
           ),
-        ],
-      ),
-      child: ClipOval(
-        child: path != null && path.isNotEmpty
-            ? _buildImage(path)
-            : Container(
-                color: Colors.white,
-                child: Icon(Icons.person,
-                    size: 50, color: Colors.orange.shade300),
+          if (showEditButton && !_isUploadingPhoto)
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade600,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: const Icon(
+                  Icons.camera_alt,
+                  size: 16,
+                  color: Colors.white,
+                ),
               ),
+            ),
+        ],
       ),
     );
   }
@@ -267,7 +352,7 @@ class OwnerProfileScreen extends ConsumerWidget {
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
       final url = imagePath.startsWith('http')
           ? imagePath
-          : 'http://192.168.1.3:5000$imagePath';
+          : 'http://192.168.1.5:5000$imagePath';
       return Image.network(
         url,
         fit: BoxFit.cover,

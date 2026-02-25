@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:chiya_sathi/core/error/exception.dart';
 import 'package:chiya_sathi/core/error/failures.dart';
 import 'package:chiya_sathi/core/network/network_info.dart';
@@ -107,6 +108,26 @@ class AuthRepositoryImpl implements IAuthRepository {
       return const Right(true);
     } catch (e) {
       return Left(LocalDatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> updateProfilePicture(File image) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final token = await localDataSource.getToken();
+        if (token == null) {
+          return const Left(ServerFailure('Not authenticated'));
+        }
+        final newUrl = await remoteDataSource.updateProfilePicture(token, image);
+        return Right(newUrl);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      } catch (e) {
+        return Left(ServerFailure(e.toString()));
+      }
+    } else {
+      return const Left(ConnectionFailure('No internet connection'));
     }
   }
 }
