@@ -100,7 +100,8 @@ class OrderRemoteDatasourceImpl implements OrderRemoteDatasource {
     required String orderId,
     required String status,
   }) async {
-    final response = await client
+    // Try /orders/:id/status first, fall back to /orders/:id
+    var response = await client
         .put(
           Uri.parse('$baseUrl/orders/$orderId/status'),
           headers: {
@@ -110,6 +111,20 @@ class OrderRemoteDatasourceImpl implements OrderRemoteDatasource {
           body: jsonEncode({'status': status}),
         )
         .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 404) {
+      // Fallback: try PUT /orders/:id with status in body
+      response = await client
+          .put(
+            Uri.parse('$baseUrl/orders/$orderId'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'status': status}),
+          )
+          .timeout(const Duration(seconds: 10));
+    }
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
 

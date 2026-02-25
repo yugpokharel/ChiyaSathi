@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chiya_sathi/core/services/notification_service.dart';
 import 'package:chiya_sathi/features/menu/domain/entities/cart_item.dart';
 import 'package:chiya_sathi/features/menu/domain/entities/menu_item.dart';
 import 'package:chiya_sathi/features/owner/data/datasources/order_remote_datasource.dart';
@@ -135,8 +136,24 @@ class ShopOrdersNotifier extends StateNotifier<List<ShopOrder>> {
 
     try {
       final list = await _remoteDatasource.getOrders(token: token);
-      state = list.map((json) => ShopOrder.fromJson(json)).toList()
+      final newOrders = list.map((json) => ShopOrder.fromJson(json)).toList()
         ..sort((a, b) => b.orderedAt.compareTo(a.orderedAt));
+
+      // Detect new pending orders that weren't in previous state
+      if (state.isNotEmpty) {
+        final existingIds = state.map((o) => o.id).toSet();
+        final freshPending = newOrders.where(
+          (o) => o.status == ShopOrderStatus.pending && !existingIds.contains(o.id),
+        );
+        for (final order in freshPending) {
+          NotificationService().showOrderNotification(
+            title: 'New Order! 🔔',
+            body: 'Table ${order.tableId} — Rs. ${order.totalAmount.toStringAsFixed(0)}',
+          );
+        }
+      }
+
+      state = newOrders;
     } catch (_) {
       // silently fail — keep current state
     }
@@ -237,7 +254,8 @@ class ShopOrdersNotifier extends StateNotifier<List<ShopOrder>> {
           status: _statusToString(newStatus),
         );
       } catch (_) {
-        // Already updated optimistically
+        // Re-fetch to get the real state from server
+        await fetchOrders();
       }
     }
   }
