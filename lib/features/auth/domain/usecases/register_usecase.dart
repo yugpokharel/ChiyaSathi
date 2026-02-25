@@ -14,6 +14,7 @@ class RegisterUsecaseParams extends Equatable {
   final String phoneNumber;
   final String password;
   final File? profilePicture;
+  final String? role;
 
   const RegisterUsecaseParams({
     required this.fullName,
@@ -22,10 +23,11 @@ class RegisterUsecaseParams extends Equatable {
     required this.phoneNumber,
     required this.password,
     this.profilePicture,
+    this.role,
   });
 
   @override
-  List<Object?> get props => [fullName, username, email, phoneNumber, password, profilePicture];
+  List<Object?> get props => [fullName, username, email, phoneNumber, password, profilePicture, role];
 }
 
 // Usecase
@@ -44,6 +46,7 @@ class RegisterUsecase implements Usecase<bool, RegisterUsecaseParams> {
       password: params.password,
       token: null,
       profilePicture: params.profilePicture?.path,
+      role: params.role,
     );
     return await _authRepository.register(entity);
   }

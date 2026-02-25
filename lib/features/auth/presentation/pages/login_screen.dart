@@ -4,6 +4,8 @@ import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_mode
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -64,13 +66,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
 
       if (next.user != null && !next.isLoading) {
+        // Reset table data on fresh login
+        final authBox = Hive.box(HiveTableConstants.authBox);
+        authBox.delete('tableId');
+        authBox.delete('tableScannedAt');
+
+        final role = authBox.get('userRole', defaultValue: 'customer');
+
         showMySnackBar(
           context: context,
           message: "Login Successful",
           color: Colors.green,
         );
 
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          role == 'owner' ? '/owner_dashboard' : '/dashboard',
+          (route) => false,
+        );
       }
     });
 
@@ -181,8 +194,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             color: Colors.orange,
                             fontWeight: FontWeight.bold),
                         recognizer: TapGestureRecognizer()
-                          ..onTap =
-                              () => Navigator.pushNamed(context, '/signup'),
+                          ..onTap = () {
+                              final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+                              Navigator.pushNamed(
+                                context,
+                                '/signup',
+                                arguments: args,
+                              );
+                            },
                       ),
                     ],
                   ),

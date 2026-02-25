@@ -4,6 +4,8 @@ import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_mode
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -24,10 +26,22 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  // Owner-specific controllers
+  final cafeNameController = TextEditingController();
+  final cafeAddressController = TextEditingController();
+
   bool hidePassword = true;
   bool hideConfirm = true;
   File? _selectedImage;
   final ImagePicker _imagePicker = ImagePicker();
+
+  String get _role {
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    return args?['role'] ?? 'customer';
+  }
+
+  bool get _isOwner => _role == 'owner';
 
   @override
   void dispose() {
@@ -37,6 +51,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
+    cafeNameController.dispose();
+    cafeAddressController.dispose();
     super.dispose();
   }
 
@@ -60,6 +76,22 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         return;
       }
 
+      // Save owner café details to Hive
+      if (_isOwner) {
+        if (cafeNameController.text.trim().isEmpty ||
+            cafeAddressController.text.trim().isEmpty) {
+          showMySnackBar(
+            context: context,
+            message: "Please fill in all café details",
+            color: Colors.red,
+          );
+          return;
+        }
+        final box = Hive.box(HiveTableConstants.authBox);
+        box.put('cafeName', cafeNameController.text.trim());
+        box.put('cafeAddress', cafeAddressController.text.trim());
+      }
+
       ref.read(authViewModelProvider.notifier).register(
             fullName: fullNameController.text.trim(),
             username: usernameController.text.trim(),
@@ -67,6 +99,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             email: emailController.text.trim(),
             password: passwordController.text.trim(),
             profilePicture: _selectedImage,
+            role: _role,
           );
     }
   }
@@ -135,9 +168,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Sign Up',
-          style: TextStyle(color: Colors.black, fontSize: 18),
+        title: Text(
+          _isOwner ? 'Owner Sign Up' : 'Sign Up',
+          style: const TextStyle(color: Colors.black, fontSize: 18),
         ),
         centerTitle: true,
       ),
@@ -149,9 +182,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              const Text(
-                'Create your account',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Text(
+                _isOwner ? 'Create your owner account' : 'Create your account',
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 30),
               _buildProfilePicturePicker(),
@@ -169,6 +202,42 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   return null;
                 },
               ),
+
+              // Owner-specific fields
+              if (_isOwner) ...[
+                Container(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.store, color: Colors.orange.shade700, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Café Details',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.orange.shade800,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildField("CAFÉ NAME", cafeNameController, "Enter your café name"),
+                      _buildField("CAFÉ ADDRESS", cafeAddressController, "Enter café address"),
+                    ],
+                  ),
+                ),
+              ],
+
               _buildPasswordField(
                 "PASSWORD",
                 passwordController,

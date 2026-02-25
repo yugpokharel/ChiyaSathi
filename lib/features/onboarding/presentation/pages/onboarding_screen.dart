@@ -38,7 +38,7 @@ class OnboardingScreen extends StatelessWidget {
                 height: 56,
                 child: MyButtonWidgets(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/login');
+                    Navigator.pushNamed(context, '/role_selection');
                   },
                   text: 'GET STARTED',
                 ),

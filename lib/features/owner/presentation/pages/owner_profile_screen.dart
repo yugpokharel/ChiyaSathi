@@ -3,35 +3,36 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
 import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_model_provider.dart';
-import 'package:chiya_sathi/features/menu/presentation/providers/order_provider.dart';
-import 'package:chiya_sathi/features/menu/presentation/providers/cart_provider.dart';
 import 'dart:io';
 
-class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({super.key});
+class OwnerProfileScreen extends ConsumerWidget {
+  const OwnerProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authViewModelProvider);
-    final authEntity = authState.user;
+    final user = authState.user;
+    final box = Hive.box(HiveTableConstants.authBox);
+    final cafeName = box.get('cafeName', defaultValue: 'My Café');
+    final cafeAddress = box.get('cafeAddress', defaultValue: '');
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      body: authEntity != null
+      body: user != null
           ? SingleChildScrollView(
               child: Column(
                 children: [
-                  // Profile header with gradient
+                  // Gradient header
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
+                        colors: [
+                          Colors.orange.shade500,
+                          Colors.orange.shade700,
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Colors.orange.shade400,
-                          Colors.orange.shade600,
-                        ],
                       ),
                       borderRadius: const BorderRadius.only(
                         bottomLeft: Radius.circular(32),
@@ -45,7 +46,7 @@ class ProfileScreen extends ConsumerWidget {
                         child: Column(
                           children: [
                             const Text(
-                              'My Profile',
+                              'Owner Profile',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -53,24 +54,39 @@ class ProfileScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            _buildProfilePicture(authEntity.profilePicture),
+                            _buildProfilePicture(user.profilePicture),
                             const SizedBox(height: 14),
                             Text(
-                              authEntity.fullName,
+                              user.fullName,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'OpenSans',
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              '@${authEntity.username}',
-                              style: TextStyle(
-                                color: Colors.white.withAlpha(200),
-                                fontSize: 14,
-                                fontFamily: 'OpenSans',
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withAlpha(30),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.store,
+                                      color: Colors.white, size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    cafeName,
+                                    style: TextStyle(
+                                      color: Colors.white.withAlpha(220),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -81,7 +97,7 @@ class ProfileScreen extends ConsumerWidget {
 
                   const SizedBox(height: 24),
 
-                  // Info section
+                  // Account details
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
@@ -92,93 +108,45 @@ class ProfileScreen extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                            fontFamily: 'OpenSans',
                           ),
                         ),
                         const SizedBox(height: 12),
-                        _buildInfoTile(
-                          icon: Icons.email_outlined,
-                          label: 'Email',
-                          value: authEntity.email,
-                        ),
-                        _buildInfoTile(
-                          icon: Icons.phone_outlined,
-                          label: 'Phone',
-                          value: authEntity.phoneNumber,
-                        ),
-                        _buildInfoTile(
-                          icon: Icons.person_outline,
-                          label: 'Username',
-                          value: authEntity.username,
-                        ),
+                        _infoTile(Icons.email_outlined, 'Email', user.email),
+                        _infoTile(
+                            Icons.phone_outlined, 'Phone', user.phoneNumber),
+                        _infoTile(
+                            Icons.person_outline, 'Username', user.username),
                       ],
                     ),
                   ),
 
                   const SizedBox(height: 24),
 
-                  // Settings / Actions section
+                  // Café details
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Settings',
+                          'Café Details',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                            fontFamily: 'OpenSans',
                           ),
                         ),
                         const SizedBox(height: 12),
-                        _buildActionTile(
-                          icon: Icons.table_bar_outlined,
-                          label: 'Reset Table',
-                          subtitle: 'Clear your current table assignment',
-                          onTap: () {
-                            final authBox =
-                                Hive.box(HiveTableConstants.authBox);
-                            authBox.delete('tableId');
-                            authBox.delete('tableScannedAt');
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Table reset successfully'),
-                                duration: Duration(seconds: 1),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildActionTile(
-                          icon: Icons.info_outline,
-                          label: 'About ChiyaSathi',
-                          subtitle: 'Version 1.0.0',
-                          onTap: () {
-                            showAboutDialog(
-                              context: context,
-                              applicationName: 'ChiyaSathi',
-                              applicationVersion: '1.0.0',
-                              applicationLegalese: '© 2026 ChiyaSathi',
-                              children: [
-                                const SizedBox(height: 16),
-                                const Text(
-                                  'Your favourite tea shop companion. '
-                                  'Scan a table QR, browse the menu, '
-                                  'and place your order — all from your phone.',
-                                ),
-                              ],
-                            );
-                          },
-                        ),
+                        _infoTile(Icons.store_outlined, 'Café Name', cafeName),
+                        if (cafeAddress.isNotEmpty)
+                          _infoTile(Icons.location_on_outlined, 'Address',
+                              cafeAddress),
                       ],
                     ),
                   ),
 
                   const SizedBox(height: 32),
 
-                  // Logout button
+                  // Logout
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: SizedBox(
@@ -192,7 +160,6 @@ class ProfileScreen extends ConsumerWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 15,
-                            letterSpacing: 0.5,
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -237,21 +204,19 @@ class ProfileScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
+            child: Text('Cancel',
+                style: TextStyle(color: Colors.grey.shade600)),
           ),
           TextButton(
             onPressed: () {
-              // Clear table, order, cart
-              final authBox = Hive.box(HiveTableConstants.authBox);
-              authBox.delete('tableId');
-              authBox.delete('tableScannedAt');
-              ref.read(orderProvider.notifier).clearOrder();
-              ref.read(cartProvider.notifier).clearCart();
+              final box = Hive.box(HiveTableConstants.authBox);
+              box.delete('tableId');
+              box.delete('tableScannedAt');
+              box.delete('userRole');
+              box.delete('cafeName');
+              box.delete('cafeAddress');
 
-              Navigator.pop(ctx); // close dialog
+              Navigator.pop(ctx);
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 '/login',
@@ -271,7 +236,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfilePicture(String? profilePicturePath) {
+  Widget _buildProfilePicture(String? path) {
     return Container(
       width: 100,
       height: 100,
@@ -287,75 +252,40 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
       child: ClipOval(
-        child:
-            profilePicturePath != null && profilePicturePath.isNotEmpty
-                ? _buildImageWidget(profilePicturePath)
-                : Container(
-                    color: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 50,
-                      color: Colors.orange.shade300,
-                    ),
-                  ),
+        child: path != null && path.isNotEmpty
+            ? _buildImage(path)
+            : Container(
+                color: Colors.white,
+                child: Icon(Icons.person,
+                    size: 50, color: Colors.orange.shade300),
+              ),
       ),
     );
   }
 
-  Widget _buildImageWidget(String imagePath) {
+  Widget _buildImage(String imagePath) {
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
       final url = imagePath.startsWith('http')
           ? imagePath
           : 'http://192.168.1.3:5000$imagePath';
-
       return Image.network(
         url,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            color: Colors.white,
-            child: Icon(
-              Icons.broken_image,
-              size: 50,
-              color: Colors.grey.shade400,
-            ),
-          );
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            color: Colors.white,
-            child: Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                    : null,
-              ),
-            ),
-          );
-        },
+        errorBuilder: (_, __, ___) => Container(
+          color: Colors.white,
+          child: Icon(Icons.broken_image, size: 50, color: Colors.grey.shade400),
+        ),
       );
     } else if (File(imagePath).existsSync()) {
       return Image.file(File(imagePath), fit: BoxFit.cover);
-    } else {
-      return Container(
-        color: Colors.white,
-        child: Icon(
-          Icons.broken_image,
-          size: 50,
-          color: Colors.grey.shade400,
-        ),
-      );
     }
+    return Container(
+      color: Colors.white,
+      child: Icon(Icons.broken_image, size: 50, color: Colors.grey.shade400),
+    );
   }
 
-  Widget _buildInfoTile({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
+  Widget _infoTile(IconData icon, String label, String value) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -407,69 +337,6 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActionTile({
-    required IconData icon,
-    required String label,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(10),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, size: 20, color: Colors.grey.shade700),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
-          ],
-        ),
       ),
     );
   }

@@ -34,6 +34,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
     required String phoneNumber,
     required String password,
     File? profilePicture,
+    String? role,
   }) async {
     state = const AuthState.loading();
 
@@ -45,6 +46,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
         phoneNumber: phoneNumber,
         password: password,
         profilePicture: profilePicture,
+        role: role,
       ),
     );
 

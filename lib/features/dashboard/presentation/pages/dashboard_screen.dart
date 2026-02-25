@@ -29,7 +29,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final profilePicture = authState.user?.profilePicture;
     final order = ref.watch(orderProvider);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
       extendBodyBehindAppBar: false,
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -123,6 +125,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
+    ),
     );
   }
 

@@ -3,8 +3,11 @@ import 'package:chiya_sathi/features/menu/data/repositories/menu_repository.dart
 import 'package:chiya_sathi/features/menu/domain/entities/menu_item.dart';
 import 'package:chiya_sathi/features/menu/presentation/providers/cart_provider.dart';
 import 'package:chiya_sathi/features/menu/presentation/providers/order_provider.dart';
+import 'package:chiya_sathi/features/owner/presentation/providers/shop_orders_provider.dart';
+import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class MenuCategoryScreen extends ConsumerWidget {
   final String category;
@@ -51,12 +54,24 @@ class MenuCategoryScreen extends ConsumerWidget {
                 ],
               ),
               child: ElevatedButton(
-                onPressed: () {
-                  // Place the order
+                onPressed: () async {
+                  // Get table ID
+                  final box = Hive.box(HiveTableConstants.authBox);
+                  final tableId = box.get('tableId', defaultValue: '?');
+
+                  // Place order in customer's local state
                   ref.read(orderProvider.notifier).placeOrder(
                         cartItems,
                         totalAmount,
                       );
+
+                  // Place order via API (visible to owner)
+                  await ref.read(shopOrdersProvider.notifier).placeOrder(
+                        tableId: tableId,
+                        items: cartItems,
+                        totalAmount: totalAmount,
+                      );
+
                   // Clear the cart
                   cartNotifier.clearCart();
 
@@ -67,11 +82,13 @@ class MenuCategoryScreen extends ConsumerWidget {
                   );
 
                   // Navigate to order status
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/order_status',
-                    (route) => false,
-                  );
+                  if (context.mounted) {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/order_status',
+                      (route) => false,
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange.shade400,

@@ -73,6 +73,7 @@ class AuthRepositoryImpl implements IAuthRepository {
           fullName: authEntity.fullName,
           username: authEntity.username,
           phoneNumber: authEntity.phoneNumber,
+          role: authEntity.role,
         );
         await localDataSource.saveUser(AuthHiveModel.fromEntity(authEntity));
         return const Right(true);

@@ -14,6 +14,7 @@ abstract class AuthRemoteDatasource {
     required String username,
     required String phoneNumber,
     File? profilePicture,
+    String? role,
   });
 
   Future<AuthEntity> getCurrentUser(String token);
@@ -62,6 +63,7 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     required String username,
     required String phoneNumber,
     File? profilePicture,
+    String? role,
   }) async {
     final request = http.MultipartRequest(
       'POST',
@@ -74,6 +76,9 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     request.fields['fullName'] = fullName;
     request.fields['username'] = username;
     request.fields['phoneNumber'] = phoneNumber;
+    if (role != null) {
+      request.fields['role'] = role;
+    }
 
     // Add profile picture if provided
     if (profilePicture != null && profilePicture.existsSync()) {
