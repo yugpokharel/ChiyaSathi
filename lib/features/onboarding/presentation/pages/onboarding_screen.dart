@@ -35,7 +35,7 @@ class OnboardingScreen extends StatelessWidget {
               const SizedBox(height: 60),
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 26,
                 child: MyButtonWidgets(
                   onPressed: () {
                     Navigator.pushNamed(context, '/role_selection');
