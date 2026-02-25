@@ -14,11 +14,15 @@ class MenuItem {
   });
 
   factory MenuItem.fromJson(Map<String, dynamic> json) {
+    var image = json['image'] as String?;
+    if (image != null && image.isNotEmpty && !image.startsWith('http')) {
+      image = 'http://192.168.1.5:5000$image';
+    }
     return MenuItem(
       id: json['_id'] ?? json['id'] ?? '',
       name: json['name'] ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0,
-      image: json['image'],
+      image: image,
       category: json['category'] ?? '',
     );
   }

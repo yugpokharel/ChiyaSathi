@@ -10,13 +10,14 @@ abstract class MenuRemoteDatasource {
     required String name,
     required double price,
     required String category,
-    String? image,
+    String? imagePath,
   });
 
   Future<Map<String, dynamic>> updateMenuItem({
     required String token,
     required String itemId,
     required Map<String, dynamic> updates,
+    String? imagePath,
   });
 
   Future<void> deleteMenuItem({
@@ -60,25 +61,36 @@ class MenuRemoteDatasourceImpl implements MenuRemoteDatasource {
     required String name,
     required double price,
     required String category,
-    String? image,
+    String? imagePath,
   }) async {
-    final body = <String, dynamic>{
-      'name': name,
-      'price': price,
-      'category': category,
-    };
-    if (image != null) body['image'] = image;
+    late http.Response response;
 
-    final response = await client
-        .post(
-          Uri.parse('$baseUrl/menu'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-          body: jsonEncode(body),
-        )
-        .timeout(const Duration(seconds: 10));
+    if (imagePath != null) {
+      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/menu'))
+        ..headers['Authorization'] = 'Bearer $token'
+        ..fields['name'] = name
+        ..fields['price'] = price.toString()
+        ..fields['category'] = category
+        ..files.add(await http.MultipartFile.fromPath('image', imagePath));
+      final streamed =
+          await request.send().timeout(const Duration(seconds: 30));
+      response = await http.Response.fromStream(streamed);
+    } else {
+      response = await client
+          .post(
+            Uri.parse('$baseUrl/menu'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({
+              'name': name,
+              'price': price,
+              'category': category,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+    }
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
 
@@ -95,17 +107,34 @@ class MenuRemoteDatasourceImpl implements MenuRemoteDatasource {
     required String token,
     required String itemId,
     required Map<String, dynamic> updates,
+    String? imagePath,
   }) async {
-    final response = await client
-        .put(
-          Uri.parse('$baseUrl/menu/$itemId'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-          body: jsonEncode(updates),
-        )
-        .timeout(const Duration(seconds: 10));
+    late http.Response response;
+
+    if (imagePath != null) {
+      final request =
+          http.MultipartRequest('PUT', Uri.parse('$baseUrl/menu/$itemId'))
+            ..headers['Authorization'] = 'Bearer $token';
+      updates.forEach((key, value) {
+        request.fields[key] = value.toString();
+      });
+      request.files
+          .add(await http.MultipartFile.fromPath('image', imagePath));
+      final streamed =
+          await request.send().timeout(const Duration(seconds: 30));
+      response = await http.Response.fromStream(streamed);
+    } else {
+      response = await client
+          .put(
+            Uri.parse('$baseUrl/menu/$itemId'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(updates),
+          )
+          .timeout(const Duration(seconds: 10));
+    }
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
 

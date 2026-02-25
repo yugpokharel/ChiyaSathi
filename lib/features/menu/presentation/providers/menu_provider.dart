@@ -108,7 +108,7 @@ class MenuNotifier extends StateNotifier<MenuState> {
     required String name,
     required double price,
     required String category,
-    String? image,
+    String? imagePath,
   }) async {
     final token = _token;
     if (token == null) return false;
@@ -119,7 +119,7 @@ class MenuNotifier extends StateNotifier<MenuState> {
         name: name,
         price: price,
         category: category,
-        image: image,
+        imagePath: imagePath,
       );
       final item = MenuItem.fromJson(data);
       state = state.copyWith(items: [...state.items, item]);
@@ -135,7 +135,7 @@ class MenuNotifier extends StateNotifier<MenuState> {
     String? name,
     double? price,
     String? category,
-    String? image,
+    String? imagePath,
   }) async {
     final token = _token;
     if (token == null) return false;
@@ -144,13 +144,13 @@ class MenuNotifier extends StateNotifier<MenuState> {
     if (name != null) updates['name'] = name;
     if (price != null) updates['price'] = price;
     if (category != null) updates['category'] = category;
-    if (image != null) updates['image'] = image;
 
     try {
       final data = await _remote.updateMenuItem(
         token: token,
         itemId: itemId,
         updates: updates,
+        imagePath: imagePath,
       );
       final updated = MenuItem.fromJson(data);
       state = state.copyWith(

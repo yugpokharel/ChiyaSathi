@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:chiya_sathi/features/menu/presentation/providers/menu_provider.dart';
 import 'package:chiya_sathi/features/menu/domain/entities/menu_item.dart';
 
@@ -93,6 +95,7 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
     String selectedCategory = 'Tea';
     final categories = ['Tea', 'Coffee', 'Cigarette', 'Snacks'];
     final formKey = GlobalKey<FormState>();
+    File? pickedImage;
 
     showDialog(
       context: context,
@@ -104,9 +107,54 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
               style: TextStyle(fontWeight: FontWeight.bold)),
           content: Form(
             key: formKey,
+            child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                GestureDetector(
+                  onTap: () async {
+                    final xFile = await ImagePicker().pickImage(
+                      source: ImageSource.gallery,
+                      maxWidth: 800,
+                      maxHeight: 800,
+                      imageQuality: 80,
+                    );
+                    if (xFile != null) {
+                      setDialogState(() => pickedImage = File(xFile.path));
+                    }
+                  },
+                  child: Container(
+                    height: 120,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: pickedImage != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              pickedImage!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                            ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_a_photo,
+                                  size: 36, color: Colors.grey.shade400),
+                              const SizedBox(height: 8),
+                              Text('Add Photo',
+                                  style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 13)),
+                            ],
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: nameCtrl,
                   decoration: InputDecoration(
@@ -154,6 +202,7 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
                 ),
               ],
             ),
+            ),
           ),
           actions: [
             TextButton(
@@ -174,6 +223,7 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
                       name: nameCtrl.text.trim(),
                       price: double.parse(priceCtrl.text.trim()),
                       category: selectedCategory,
+                      imagePath: pickedImage?.path,
                     );
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -200,6 +250,7 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
     String selectedCategory = item.category;
     final categories = ['Tea', 'Coffee', 'Cigarette', 'Snacks'];
     final formKey = GlobalKey<FormState>();
+    File? pickedImage;
 
     showDialog(
       context: context,
@@ -211,9 +262,77 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
               style: TextStyle(fontWeight: FontWeight.bold)),
           content: Form(
             key: formKey,
+            child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                GestureDetector(
+                  onTap: () async {
+                    final xFile = await ImagePicker().pickImage(
+                      source: ImageSource.gallery,
+                      maxWidth: 800,
+                      maxHeight: 800,
+                      imageQuality: 80,
+                    );
+                    if (xFile != null) {
+                      setDialogState(() => pickedImage = File(xFile.path));
+                    }
+                  },
+                  child: Container(
+                    height: 120,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: pickedImage != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              pickedImage!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                            ),
+                          )
+                        : item.image != null && item.image!.isNotEmpty
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  item.image!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  errorBuilder: (_, __, ___) => Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.add_a_photo,
+                                          size: 36,
+                                          color: Colors.grey.shade400),
+                                      const SizedBox(height: 8),
+                                      Text('Change Photo',
+                                          style: TextStyle(
+                                              color: Colors.grey.shade500,
+                                              fontSize: 13)),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_a_photo,
+                                      size: 36, color: Colors.grey.shade400),
+                                  const SizedBox(height: 8),
+                                  Text('Add Photo',
+                                      style: TextStyle(
+                                          color: Colors.grey.shade500,
+                                          fontSize: 13)),
+                                ],
+                              ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: nameCtrl,
                   decoration: InputDecoration(
@@ -261,6 +380,7 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
                 ),
               ],
             ),
+            ),
           ),
           actions: [
             TextButton(
@@ -282,6 +402,7 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
                       name: nameCtrl.text.trim(),
                       price: double.parse(priceCtrl.text.trim()),
                       category: selectedCategory,
+                      imagePath: pickedImage?.path,
                     );
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -466,16 +587,36 @@ class _MenuItemTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child:
-                Icon(Icons.fastfood, size: 20, color: Colors.grey.shade400),
-          ),
+          item.image != null && item.image!.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    item.image!,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.fastfood,
+                          size: 20, color: Colors.grey.shade400),
+                    ),
+                  ),
+                )
+              : Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.fastfood,
+                      size: 20, color: Colors.grey.shade400),
+                ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(item.name,
