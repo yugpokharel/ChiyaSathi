@@ -1,7 +1,8 @@
 import 'package:chiya_sathi/features/menu/domain/entities/menu_item.dart';
 
 class MenuRepository {
-  static final List<MenuItem> _menuItems = [
+  /// Static fallback menu used when the API is unavailable
+  static final List<MenuItem> fallbackItems = [
     // Tea
     MenuItem(id: 'tea-001', name: 'Milk Tea', price: 50, category: 'Tea', image: 'assets/images/tea.jpg'),
     MenuItem(id: 'tea-002', name: 'Lemon Tea', price: 40, category: 'Tea', image: 'assets/images/tea.jpg'),
@@ -23,6 +24,6 @@ class MenuRepository {
   ];
 
   List<MenuItem> getMenuItemsByCategory(String category) {
-    return _menuItems.where((item) => item.category == category).toList();
+    return fallbackItems.where((item) => item.category == category).toList();
   }
 }

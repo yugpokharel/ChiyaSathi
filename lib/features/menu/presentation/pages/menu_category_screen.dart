@@ -1,7 +1,7 @@
 import 'package:chiya_sathi/core/services/notification_service.dart';
-import 'package:chiya_sathi/features/menu/data/repositories/menu_repository.dart';
 import 'package:chiya_sathi/features/menu/domain/entities/menu_item.dart';
 import 'package:chiya_sathi/features/menu/presentation/providers/cart_provider.dart';
+import 'package:chiya_sathi/features/menu/presentation/providers/menu_provider.dart';
 import 'package:chiya_sathi/features/menu/presentation/providers/order_provider.dart';
 import 'package:chiya_sathi/features/owner/presentation/providers/shop_orders_provider.dart';
 import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
@@ -9,23 +9,46 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-class MenuCategoryScreen extends ConsumerWidget {
+class MenuCategoryScreen extends ConsumerStatefulWidget {
   final String category;
   const MenuCategoryScreen({super.key, required this.category});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final menuItems = MenuRepository().getMenuItemsByCategory(category);
+  ConsumerState<MenuCategoryScreen> createState() =>
+      _MenuCategoryScreenState();
+}
+
+class _MenuCategoryScreenState extends ConsumerState<MenuCategoryScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final menu = ref.read(menuProvider);
+    if (menu.items.isEmpty) {
+      Future.microtask(() => ref.read(menuProvider.notifier).fetchMenu());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final menu = ref.watch(menuProvider);
+    final menuItems = menu.byCategory(widget.category);
     final cartItems = ref.watch(cartProvider);
     final cartNotifier = ref.read(cartProvider.notifier);
     final totalAmount = cartNotifier.totalAmount;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(category),
+        title: Text(widget.category),
         backgroundColor: Colors.orange.shade400,
       ),
-      body: ListView.builder(
+      body: menu.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : menuItems.isEmpty
+              ? Center(
+                  child: Text('No items in ${widget.category}',
+                      style: TextStyle(color: Colors.grey.shade500)),
+                )
+              : ListView.builder(
         padding: const EdgeInsets.only(bottom: 100),
         itemCount: menuItems.length,
         itemBuilder: (context, index) {

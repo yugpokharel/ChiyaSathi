@@ -30,11 +30,18 @@ class MyApp extends StatelessWidget {
         '/dashboard': (context) => const DashboardScreen(),
         '/owner_dashboard': (context) => const OwnerDashboardScreen(),
         '/qr_scanner': (context) => const QRScannerScreen(),
-        '/menu/Tea': (context) => const MenuCategoryScreen(category: 'Tea'),
-        '/menu/Coffee': (context) => const MenuCategoryScreen(category: 'Coffee'),
-        '/menu/Cigarette': (context) => const MenuCategoryScreen(category: 'Cigarette'),
-        '/menu/Snacks': (context) => const MenuCategoryScreen(category: 'Snacks'),
         '/order_status': (context) => const OrderStatusScreen(),
+      },
+      onGenerateRoute: (settings) {
+        // Handle dynamic /menu/<category> routes
+        if (settings.name != null && settings.name!.startsWith('/menu/')) {
+          final category = settings.name!.substring('/menu/'.length);
+          return MaterialPageRoute(
+            builder: (_) => MenuCategoryScreen(category: category),
+            settings: settings,
+          );
+        }
+        return null;
       },
     );
   }
