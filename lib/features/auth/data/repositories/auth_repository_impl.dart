@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:chiya_sathi/core/error/exception.dart';
 import 'package:chiya_sathi/core/error/failures.dart';
@@ -42,8 +43,16 @@ class AuthRepositoryImpl implements IAuthRepository {
         await localDataSource.saveUser(AuthHiveModel.fromEntity(userWithPassword));
         await localDataSource.saveToken(remoteData['token']);
         return Right(user);
-      } catch (_) {
-        // Remote failed (server down, timeout, etc.) — fall through to local login
+      } on ServerException catch (e) {
+        // Actual API error (wrong credentials, etc.) — return immediately
+        return Left(ServerFailure(e.message));
+      } on SocketException {
+        // Network unreachable — fall through to local login
+      } on TimeoutException {
+        // Server didn't respond in time — fall through to local login
+      } catch (e) {
+        // Other unexpected errors — fall through to local login
+        print('Remote login error: $e');
       }
     }
 
