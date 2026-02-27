@@ -122,10 +122,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
 
     if (result == true) {
-      await _biometricService.saveCredentials(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+      final authenticated = await _biometricService.authenticate(
+        reason: 'Verify your identity to enable $_biometricLabel login',
       );
+      if (authenticated) {
+        await _biometricService.saveCredentials(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$_biometricLabel login enabled!'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$_biometricLabel verification failed. Try again from Settings.'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
     }
 
     if (mounted) {

@@ -45,10 +45,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _toggleBiometric(bool value) async {
     if (value) {
-      // Need to prompt for credentials since we're enabling from profile
+      // Verify biometric first
+      final authenticated = await _biometricService.authenticate(
+        reason: 'Verify your identity to enable $_biometricLabel login',
+      );
+      if (!authenticated || !mounted) return;
+      // Then ask for password to store credentials
       final email = ref.read(authViewModelProvider).user?.email;
       if (email == null) return;
-      // Ask user to confirm password to store credentials
       final password = await _showPasswordConfirmDialog();
       if (password == null || !mounted) return;
       await _biometricService.saveCredentials(email: email, password: password);
