@@ -25,12 +25,17 @@ class _SplashScreenState extends State<SplashScreen> {
     final token = authBox.get('auth_token');
     final biometricService = BiometricService();
     final biometricEnabled = await biometricService.isBiometricLoginEnabled();
+    final hasCredentials = await biometricService.getStoredCredentials() != null;
 
-    if (token != null && biometricEnabled) {
-      // User was logged in before and has biometric enabled — go to login
-      // so they can use biometric button for quick re-login
+    if (token != null && biometricEnabled && hasCredentials) {
+      // User was logged in before and has biometric enabled with stored creds
+      // — go to login so they can use biometric button for quick re-login
       Navigator.pushReplacementNamed(context, '/login');
     } else {
+      // Clear stale biometric state if credentials are missing
+      if (biometricEnabled && !hasCredentials) {
+        await biometricService.disableBiometric();
+      }
       Navigator.pushReplacementNamed(context, '/onboarding');
     }
   }
