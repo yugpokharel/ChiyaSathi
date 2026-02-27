@@ -5,6 +5,7 @@ import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
 import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_model_provider.dart';
 import 'package:chiya_sathi/features/menu/presentation/providers/order_provider.dart';
 import 'package:chiya_sathi/features/menu/presentation/providers/cart_provider.dart';
+import 'package:chiya_sathi/core/services/biometric_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -18,6 +19,111 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isUploadingPhoto = false;
   final ImagePicker _imagePicker = ImagePicker();
+  final BiometricService _biometricService = BiometricService();
+  bool _biometricAvailable = false;
+  bool _biometricEnabled = false;
+  String _biometricLabel = 'Biometric';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBiometricState();
+  }
+
+  Future<void> _loadBiometricState() async {
+    final available = await _biometricService.isBiometricAvailable();
+    final enabled = await _biometricService.isBiometricLoginEnabled();
+    final label = await _biometricService.getBiometricLabel();
+    if (mounted) {
+      setState(() {
+        _biometricAvailable = available;
+        _biometricEnabled = enabled;
+        _biometricLabel = label;
+      });
+    }
+  }
+
+  Future<void> _toggleBiometric(bool value) async {
+    if (value) {
+      // Need to prompt for credentials since we're enabling from profile
+      final email = ref.read(authViewModelProvider).user?.email;
+      if (email == null) return;
+      // Ask user to confirm password to store credentials
+      final password = await _showPasswordConfirmDialog();
+      if (password == null || !mounted) return;
+      await _biometricService.saveCredentials(email: email, password: password);
+    } else {
+      await _biometricService.disableBiometric();
+    }
+    if (mounted) {
+      setState(() => _biometricEnabled = value);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(value
+              ? '$_biometricLabel login enabled'
+              : '$_biometricLabel login disabled'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  Future<String?> _showPasswordConfirmDialog() async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.fingerprint, color: Colors.orange.shade600),
+            const SizedBox(width: 8),
+            const Text('Confirm Password'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Enter your password to enable $_biometricLabel login.',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              obscureText: true,
+              decoration: InputDecoration(
+                hintText: 'Password',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: TextStyle(color: Colors.grey.shade600)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                Navigator.pop(ctx, controller.text);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange.shade600,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _pickAndUploadPhoto() async {
     try {
@@ -204,6 +310,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             );
                           },
                         ),
+                        if (_biometricAvailable)
+                          _buildBiometricTile(),
                         _buildActionTile(
                           icon: Icons.info_outline,
                           label: 'About ChiyaSathi',
