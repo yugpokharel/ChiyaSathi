@@ -28,15 +28,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (token != null && biometricEnabled) {
       // User was logged in before and has biometric enabled — go to login
-      // so they can use biometric button
+      // so they can use biometric button for quick re-login
       Navigator.pushReplacementNamed(context, '/login');
-    } else if (token != null) {
-      // Has token but no biometric — go to appropriate dashboard
-      final role = authBox.get('userRole', defaultValue: 'customer');
-      Navigator.pushReplacementNamed(
-        context,
-        role == 'owner' ? '/owner_dashboard' : '/dashboard',
-      );
     } else {
       Navigator.pushReplacementNamed(context, '/onboarding');
     }
