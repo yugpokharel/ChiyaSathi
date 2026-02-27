@@ -1,6 +1,7 @@
 import 'package:chiya_sathi/common/my_snack_bar.dart';
 import 'package:chiya_sathi/features/auth/presentation/state/auth_state.dart';
 import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_model_provider.dart';
+import 'package:chiya_sathi/core/services/biometric_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +22,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final passwordController = TextEditingController();
 
   bool hidePassword = true;
+  bool _biometricAvailable = false;
+  bool _biometricEnabled = false;
+  String _biometricLabel = 'Biometric';
+  final BiometricService _biometricService = BiometricService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometric();
+  }
+
+  Future<void> _checkBiometric() async {
+    final available = await _biometricService.isBiometricAvailable();
+    final enabled = await _biometricService.isBiometricLoginEnabled();
+    final label = await _biometricService.getBiometricLabel();
+    if (mounted) {
+      setState(() {
+        _biometricAvailable = available;
+        _biometricEnabled = enabled;
+        _biometricLabel = label;
+      });
+    }
+  }
+
+  Future<void> _loginWithBiometric() async {
+    final authenticated = await _biometricService.authenticate(
+      reason: 'Verify your identity to log in',
+    );
+    if (!authenticated || !mounted) return;
+
+    final credentials = await _biometricService.getStoredCredentials();
+    if (credentials == null) {
+      showMySnackBar(
+        context: context,
+        message: 'Stored credentials not found. Please log in manually.',
+        color: Colors.orange,
+      );
+      return;
+    }
+
+    ref.read(authViewModelProvider.notifier).login(
+          email: credentials['email']!,
+          password: credentials['password']!,
+        );
+  }
 
   @override
   void dispose() {
@@ -35,6 +81,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             email: emailController.text.trim(),
             password: passwordController.text.trim(),
           );
+    }
+  }
+
+  Future<void> _showBiometricOptIn(String destination) async {
+    final label = _biometricLabel;
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.fingerprint, color: Colors.orange.shade600, size: 28),
+            const SizedBox(width: 10),
+            Text('Enable $label?'),
+          ],
+        ),
+        content: Text(
+          'Would you like to use $label to log in next time? '
+          'Your credentials will be stored securely on this device.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Not Now', style: TextStyle(color: Colors.grey.shade600)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange.shade600,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text('Enable $label'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      await _biometricService.saveCredentials(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+    }
+
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        destination,
+        (route) => false,
+      );
     }
   }
 
@@ -56,7 +155,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
 
-    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+    ref.listen<AuthState>(authViewModelProvider, (previous, next) async {
       if (next.error != null) {
         showMySnackBar(
           context: context,
@@ -72,6 +171,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         authBox.delete('tableScannedAt');
 
         final role = authBox.get('userRole', defaultValue: 'customer');
+        final destination = role == 'owner' ? '/owner_dashboard' : '/dashboard';
 
         showMySnackBar(
           context: context,
@@ -79,11 +179,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           color: Colors.green,
         );
 
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          role == 'owner' ? '/owner_dashboard' : '/dashboard',
-          (route) => false,
-        );
+        // Show biometric opt-in if available and not already enabled
+        if (_biometricAvailable && !_biometricEnabled) {
+          await _showBiometricOptIn(destination);
+        } else {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            destination,
+            (route) => false,
+          );
+        }
       }
     });
 
@@ -180,6 +285,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
 
               const SizedBox(height: 24),
+
+              // Biometric login button
+              if (_biometricAvailable && _biometricEnabled)
+                Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Divider(color: Colors.grey.shade300)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text('or',
+                              style: TextStyle(
+                                  color: Colors.grey.shade500, fontSize: 13)),
+                        ),
+                        Expanded(child: Divider(color: Colors.grey.shade300)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: OutlinedButton.icon(
+                        onPressed: authState.isLoading ? null : _loginWithBiometric,
+                        icon: Icon(Icons.fingerprint,
+                            size: 24, color: Colors.orange.shade600),
+                        label: Text(
+                          'Sign in with $_biometricLabel',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange.shade600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.orange.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+
+              if (!(_biometricAvailable && _biometricEnabled))
+                const SizedBox(height: 24),
 
               Center(
                 child: RichText(
