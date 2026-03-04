@@ -1,4 +1,6 @@
-import 'package:chiya_sathi/core/constants/api_constants.dart';\n\nclass MenuItem {
+import 'package:chiya_sathi/core/constants/api_constants.dart';
+
+class MenuItem {
   final String id;
   final String name;
   final double price;
