@@ -7,6 +7,7 @@ import 'package:chiya_sathi/features/menu/presentation/providers/order_provider.
 import 'package:chiya_sathi/features/menu/presentation/providers/cart_provider.dart';
 import 'package:chiya_sathi/core/services/biometric_service.dart';
 import 'package:chiya_sathi/core/constants/api_constants.dart';
+import 'package:chiya_sathi/core/providers/theme_provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -317,6 +318,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                         if (_biometricAvailable)
                           _buildBiometricTile(),
+                        _buildAppearanceTile(ref),
                         _buildActionTile(
                           icon: Icons.info_outline,
                           label: 'About ChiyaSathi',
@@ -665,6 +667,155 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAppearanceTile(WidgetRef ref) {
+    final currentMode = ref.watch(themeModeProvider);
+    String modeLabel;
+    IconData modeIcon;
+    switch (currentMode) {
+      case ThemeMode.light:
+        modeLabel = 'Light';
+        modeIcon = Icons.light_mode;
+        break;
+      case ThemeMode.dark:
+        modeLabel = 'Dark';
+        modeIcon = Icons.dark_mode;
+        break;
+      case ThemeMode.system:
+        modeLabel = 'System';
+        modeIcon = Icons.brightness_auto;
+        break;
+    }
+
+    return GestureDetector(
+      onTap: () => _showThemeDialog(ref),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(10),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child:
+                  Icon(modeIcon, size: 20, color: Colors.orange.shade600),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Appearance',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    modeLabel,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showThemeDialog(WidgetRef ref) {
+    final currentMode = ref.read(themeModeProvider);
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Choose Appearance'),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _themeOption(
+                ref,
+                icon: Icons.light_mode,
+                label: 'Light',
+                mode: ThemeMode.light,
+                selected: currentMode == ThemeMode.light,
+                ctx: ctx,
+              ),
+              _themeOption(
+                ref,
+                icon: Icons.dark_mode,
+                label: 'Dark',
+                mode: ThemeMode.dark,
+                selected: currentMode == ThemeMode.dark,
+                ctx: ctx,
+              ),
+              _themeOption(
+                ref,
+                icon: Icons.brightness_auto,
+                label: 'System',
+                mode: ThemeMode.system,
+                selected: currentMode == ThemeMode.system,
+                ctx: ctx,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _themeOption(
+    WidgetRef ref, {
+    required IconData icon,
+    required String label,
+    required ThemeMode mode,
+    required bool selected,
+    required BuildContext ctx,
+  }) {
+    return ListTile(
+      leading: Icon(icon,
+          color: selected ? Colors.orange.shade600 : Colors.grey.shade600),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          color: selected ? Colors.orange.shade600 : null,
+        ),
+      ),
+      trailing: selected
+          ? Icon(Icons.check_circle, color: Colors.orange.shade600)
+          : null,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      onTap: () {
+        ref.read(themeModeProvider.notifier).setThemeMode(mode);
+        Navigator.of(ctx).pop();
+      },
     );
   }
 

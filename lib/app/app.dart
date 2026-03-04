@@ -7,19 +7,25 @@ import 'package:chiya_sathi/features/qr_scanner/presentation/pages/qr_scanner_sc
 import 'package:chiya_sathi/features/role_selection/presentation/pages/role_selection_screen.dart';
 import 'package:chiya_sathi/features/owner/presentation/pages/owner_dashboard_screen.dart';
 import 'package:chiya_sathi/app/theme/app_theme.dart';
+import 'package:chiya_sathi/core/providers/theme_provider.dart';
 import 'package:chiya_sathi/features/menu/presentation/pages/menu_category_screen.dart';
 import 'package:chiya_sathi/features/menu/presentation/pages/order_status_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+
     return MaterialApp(
       title: 'Chiya Sathi',
       debugShowCheckedModeBanner: false,
-      theme: getApplicationTheme(),
+      theme: getLightTheme(),
+      darkTheme: getDarkTheme(),
+      themeMode: themeMode,
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
