@@ -21,16 +21,14 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
     final order = ref.watch(orderProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0.5,
-        title: const Text(
+        title: Text(
           'Order Status',
           style: TextStyle(
             fontFamily: 'OpenSans',
             fontWeight: FontWeight.w700,
-            color: Colors.black87,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         actions: [

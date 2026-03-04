@@ -97,7 +97,6 @@ class OwnerHomeTab extends ConsumerWidget {
         orders.where((o) => o.status == ShopOrderStatus.preparing).toList();
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       body: CustomScrollView(
         slivers: [
           // Header
@@ -368,19 +367,21 @@ class _ActiveOrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPending = order.status == ShopOrderStatus.pending;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(14),
         border: isPending
             ? Border.all(color: Colors.orange.shade200, width: 1.5)
             : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(8),
+            color: Colors.black.withAlpha(isDark ? 30 : 8),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -396,7 +397,7 @@ class _ActiveOrderCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -404,7 +405,7 @@ class _ActiveOrderCard extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
-                    color: Colors.grey.shade700,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
                   ),
                 ),
               ),

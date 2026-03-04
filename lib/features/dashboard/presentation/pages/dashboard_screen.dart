@@ -36,7 +36,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       extendBodyBehindAppBar: false,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
         elevation: 0,
         titleSpacing: 0,
         leading: Padding(
@@ -70,7 +69,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         title: const Text(''),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
+            icon: Icon(Icons.notifications_outlined, color: Theme.of(context).iconTheme.color),
             onPressed: () {
               // Notification action — can be expanded later
               ScaffoldMessenger.of(context).showSnackBar(

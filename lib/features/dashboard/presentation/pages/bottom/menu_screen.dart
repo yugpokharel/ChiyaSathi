@@ -18,17 +18,16 @@ class MenuScreen extends StatelessWidget {
                   fontFamily: 'OpenSans',
                   fontWeight: FontWeight.w700,
                   fontSize: 26,
-                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Choose your favorite items',
                 style: TextStyle(
                   fontFamily: 'OpenSans',
                   fontWeight: FontWeight.w400,
                   fontSize: 14,
-                  color: Colors.black54,
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(140),
                 ),
               ),
 

@@ -9,21 +9,27 @@ class OnboardingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFFF8ED), // warm cream
-              Color(0xFFFFF1D6), // soft peach
-              Colors.white,
-            ],
-            stops: [0.0, 0.5, 1.0],
+            colors: isDark
+                ? [
+                    const Color(0xFF1E1E1E),
+                    const Color(0xFF121212),
+                  ]
+                : [
+                    const Color(0xFFFFF8ED),
+                    const Color(0xFFFFF1D6),
+                    Colors.white,
+                  ],
+            stops: isDark ? [0.0, 1.0] : [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
@@ -65,13 +71,13 @@ class OnboardingScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'ChiyaSathi',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 34,
                     fontWeight: FontWeight.w800,
-                    color: _brandDark,
+                    color: isDark ? Colors.white : _brandDark,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -164,13 +170,14 @@ class _FeatureChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Container(
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: const Color(0xFFFFF3DC),
+            color: isDark ? Colors.orange.shade900.withAlpha(80) : const Color(0xFFFFF3DC),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Icon(
@@ -182,10 +189,10 @@ class _FeatureChip extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF5A5A5A),
+            color: isDark ? Colors.grey.shade400 : const Color(0xFF5A5A5A),
           ),
         ),
       ],

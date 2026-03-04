@@ -15,7 +15,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
@@ -43,7 +42,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
                   height: 1.3,
                 ),
               ),
@@ -147,16 +145,20 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.orange.shade50 : Colors.white,
+          color: isSelected
+              ? Colors.orange.shade50
+              : theme.cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? Colors.orange.shade400 : Colors.grey.shade200,
+            color: isSelected ? Colors.orange.shade400 : (isDark ? Colors.grey.shade700 : Colors.grey.shade200),
             width: isSelected ? 2 : 1.5,
           ),
           boxShadow: isSelected
@@ -184,7 +186,7 @@ class _RoleCard extends StatelessWidget {
                 size: 28,
                 color: isSelected
                     ? Colors.orange.shade700
-                    : Colors.grey.shade500,
+                    : (isDark ? Colors.grey.shade400 : Colors.grey.shade500),
               ),
             ),
             const SizedBox(width: 16),
@@ -197,7 +199,7 @@ class _RoleCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
-                      color: isSelected ? Colors.orange.shade800 : Colors.black87,
+                      color: isSelected ? Colors.orange.shade800 : theme.textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 4),

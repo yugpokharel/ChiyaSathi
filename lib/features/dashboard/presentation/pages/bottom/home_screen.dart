@@ -73,7 +73,7 @@ class HomeScreen extends ConsumerWidget {
                           fontFamily: 'OpenSans',
                           fontSize: 14,
                           fontWeight: FontWeight.w300,
-                          color: Colors.black,
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -83,7 +83,7 @@ class HomeScreen extends ConsumerWidget {
                           fontFamily: 'OpenSans',
                           fontWeight: FontWeight.w300,
                           fontSize: 12,
-                          color: Colors.black,
+                          color: Colors.white,
                         ),
                       ),
                     ],
@@ -213,7 +213,7 @@ class HomeScreen extends ConsumerWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(

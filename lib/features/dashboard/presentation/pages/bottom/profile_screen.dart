@@ -177,8 +177,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authState = ref.watch(authViewModelProvider);
     final authEntity = authState.user;
 
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       body: authEntity != null
           ? SingleChildScrollView(
               child: Column(
@@ -252,12 +253,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Account Details',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Colors.black87,
+                            color: theme.textTheme.bodyLarge?.color,
                             fontFamily: 'OpenSans',
                           ),
                         ),
@@ -289,12 +290,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Settings',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Colors.black87,
+                            color: theme.textTheme.bodyLarge?.color,
                             fontFamily: 'OpenSans',
                           ),
                         ),
@@ -461,7 +462,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: ClipOval(
               child: _isUploadingPhoto
                   ? Container(
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
                       child: const Center(
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
@@ -469,7 +470,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   : profilePicturePath != null && profilePicturePath.isNotEmpty
                       ? _buildImageWidget(profilePicturePath)
                       : Container(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           child: Icon(
                             Icons.person,
                             size: 50,
@@ -512,7 +513,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
           return Container(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             child: Icon(
               Icons.broken_image,
               size: 50,
@@ -523,7 +524,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return Container(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             child: Center(
               child: CircularProgressIndicator(
                 strokeWidth: 2,
@@ -540,7 +541,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return Image.file(File(imagePath), fit: BoxFit.cover);
     } else {
       return Container(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         child: Icon(
           Icons.broken_image,
           size: 50,
@@ -555,15 +556,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required String label,
     required String value,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(10),
+            color: Colors.black.withAlpha(isDark ? 30 : 10),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -574,7 +577,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.orange.shade50,
+              color: isDark ? Colors.orange.shade900.withAlpha(80) : Colors.orange.shade50,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 20, color: Colors.orange.shade600),
@@ -596,10 +599,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black87,
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
               ],
@@ -611,15 +614,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildBiometricTile() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(10),
+            color: Colors.black.withAlpha(isDark ? 30 : 10),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -630,7 +635,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.orange.shade50,
+              color: isDark ? Colors.orange.shade900.withAlpha(80) : Colors.orange.shade50,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(Icons.fingerprint,
@@ -643,10 +648,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 Text(
                   '$_biometricLabel Login',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black87,
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -671,6 +676,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildAppearanceTile(WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final currentMode = ref.watch(themeModeProvider);
     String modeLabel;
     IconData modeIcon;
@@ -695,11 +702,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(10),
+              color: Colors.black.withAlpha(isDark ? 30 : 10),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -710,7 +717,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: isDark ? Colors.orange.shade900.withAlpha(80) : Colors.orange.shade50,
                 borderRadius: BorderRadius.circular(8),
               ),
               child:
@@ -726,7 +733,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -825,17 +832,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required String subtitle,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(10),
+              color: Colors.black.withAlpha(isDark ? 30 : 10),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -846,10 +855,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, size: 20, color: Colors.grey.shade700),
+              child: Icon(icon, size: 20, color: isDark ? Colors.grey.shade400 : Colors.grey.shade700),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -858,10 +867,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 2),

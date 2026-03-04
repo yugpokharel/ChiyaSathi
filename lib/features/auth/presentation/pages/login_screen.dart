@@ -219,16 +219,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Sign In',
-            style: TextStyle(color: Colors.black, fontSize: 18)),
+        title: Text('Sign In',
+            style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 18)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(

@@ -37,9 +37,9 @@ class _MyTextFieldWidgetsState extends State<MyTextFieldWidgets> {
       decoration: InputDecoration(
         hintText: widget.hintText,
         labelText: widget.text,
-        labelStyle: const TextStyle(
+        labelStyle: TextStyle(
           fontSize: 16,
-          color: Colors.black,
+          color: Theme.of(context).textTheme.bodyLarge?.color,
           fontWeight: FontWeight.normal,
         ),
         enabledBorder: const UnderlineInputBorder(
