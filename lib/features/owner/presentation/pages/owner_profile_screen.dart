@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
 import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_model_provider.dart';
 import 'package:chiya_sathi/core/services/biometric_service.dart';
+import 'package:chiya_sathi/core/constants/api_constants.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -543,7 +544,7 @@ class _OwnerProfileScreenState extends ConsumerState<OwnerProfileScreen> {
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
       final url = imagePath.startsWith('http')
           ? imagePath
-          : 'http://192.168.1.5:5000$imagePath';
+          : '${ApiConstants.serverUrl}$imagePath';
       return Image.network(
         url,
         fit: BoxFit.cover,

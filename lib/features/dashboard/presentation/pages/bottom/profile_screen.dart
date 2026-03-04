@@ -6,6 +6,7 @@ import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_mode
 import 'package:chiya_sathi/features/menu/presentation/providers/order_provider.dart';
 import 'package:chiya_sathi/features/menu/presentation/providers/cart_provider.dart';
 import 'package:chiya_sathi/core/services/biometric_service.dart';
+import 'package:chiya_sathi/core/constants/api_constants.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -502,7 +503,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
       final url = imagePath.startsWith('http')
           ? imagePath
-          : 'http://192.168.1.5:5000$imagePath';
+          : '${ApiConstants.serverUrl}$imagePath';
 
       return Image.network(
         url,

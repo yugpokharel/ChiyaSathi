@@ -7,6 +7,7 @@ import 'package:chiya_sathi/features/owner/presentation/providers/shop_orders_pr
 import 'package:chiya_sathi/features/owner/presentation/pages/owner_orders_screen.dart';
 import 'package:chiya_sathi/features/owner/presentation/pages/owner_menu_screen.dart';
 import 'package:chiya_sathi/features/owner/presentation/pages/owner_profile_screen.dart';
+import 'package:chiya_sathi/core/constants/api_constants.dart';
 import 'dart:io';
 import 'dart:async';
 
@@ -293,7 +294,7 @@ class OwnerHomeTab extends ConsumerWidget {
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
       final url = imagePath.startsWith('http')
           ? imagePath
-          : 'http://192.168.1.5:5000$imagePath';
+          : '${ApiConstants.serverUrl}$imagePath';
       return NetworkImage(url);
     } else if (File(imagePath).existsSync()) {
       return FileImage(File(imagePath));

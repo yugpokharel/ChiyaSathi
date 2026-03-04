@@ -25,32 +25,35 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<Either<Failure, AuthEntity>> login(
       String email, String password) async {
     // Always try remote first — don't rely on connectivity_plus
+    String? remoteError;
     try {
       final remoteData = await remoteDataSource.login(email, password);
       final user = AuthEntity.fromJson(remoteData['user']);
-      // Save user with password so offline login works later
-      final userWithPassword = AuthEntity(
+      final token = remoteData['token'] as String;
+      // Build user with token + password for offline login
+      final userWithToken = AuthEntity(
         id: user.id,
         fullName: user.fullName,
         username: user.username,
         email: user.email,
         phoneNumber: user.phoneNumber,
         password: password,
-        token: user.token,
+        token: token,
         profilePicture: user.profilePicture,
+        role: user.role,
       );
-      await localDataSource.saveUser(AuthHiveModel.fromEntity(userWithPassword));
-      await localDataSource.saveToken(remoteData['token']);
-      return Right(user);
+      await localDataSource.saveUser(AuthHiveModel.fromEntity(userWithToken));
+      await localDataSource.saveToken(token);
+      return Right(userWithToken);
     } on ServerException catch (e) {
       // Actual API error (wrong credentials, etc.) — return immediately
       return Left(ServerFailure(e.message));
     } on SocketException {
-      // Network unreachable — fall through to local login
+      remoteError = 'Cannot reach server';
     } on TimeoutException {
-      // Server didn't respond in time — fall through to local login
+      remoteError = 'Server timed out';
     } catch (e) {
-      // Other unexpected errors — fall through to local login
+      remoteError = e.toString();
       print('Remote login error: $e');
     }
 
@@ -62,12 +65,12 @@ class AuthRepositoryImpl implements IAuthRepository {
           localUser.password == password) {
         return Right(localUser.toEntity());
       } else {
-        return const Left(
-            ConnectionFailure('Invalid credentials or no cached user'));
+        return Left(
+            ConnectionFailure('$remoteError. No cached user available.'));
       }
     } catch (e) {
-      return const Left(
-          LocalDatabaseFailure('Error logging in locally'));
+      return Left(
+          ConnectionFailure('$remoteError. Local login also failed.'));
     }
   }
 

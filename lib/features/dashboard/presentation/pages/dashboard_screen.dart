@@ -5,6 +5,7 @@ import 'package:chiya_sathi/features/menu/presentation/providers/order_provider.
 import 'package:chiya_sathi/features/dashboard/presentation/pages/bottom/home_screen.dart';
 import 'package:chiya_sathi/features/dashboard/presentation/pages/bottom/menu_screen.dart';
 import 'package:chiya_sathi/features/dashboard/presentation/pages/bottom/profile_screen.dart';
+import 'package:chiya_sathi/core/constants/api_constants.dart';
 import 'dart:io';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -133,7 +134,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
       final url = imagePath.startsWith('http')
           ? imagePath
-          : 'http://192.168.1.5:5000$imagePath';
+          : '${ApiConstants.serverUrl}$imagePath';
       return NetworkImage(url);
     } else if (File(imagePath).existsSync()) {
       return FileImage(File(imagePath));

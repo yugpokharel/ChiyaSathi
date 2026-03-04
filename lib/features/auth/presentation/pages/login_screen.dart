@@ -194,7 +194,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         authBox.delete('tableId');
         authBox.delete('tableScannedAt');
 
-        final role = authBox.get('userRole', defaultValue: 'customer');
+        // Save role from the server response so routing works correctly
+        final role = next.user!.role ?? authBox.get('userRole', defaultValue: 'customer');
+        authBox.put('userRole', role);
         final destination = role == 'owner' ? '/owner_dashboard' : '/dashboard';
 
         showMySnackBar(

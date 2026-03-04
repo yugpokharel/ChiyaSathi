@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:chiya_sathi/core/constants/api_constants.dart';
 import 'package:chiya_sathi/core/error/exception.dart';
 import 'package:http/http.dart' as http;
 import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
@@ -25,7 +26,7 @@ abstract class AuthRemoteDatasource {
 class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   final http.Client client;
 
-  static const String baseUrl = "http://192.168.1.5:5000/api"; 
+  static const String baseUrl = ApiConstants.baseUrl;
 
   AuthRemoteDatasourceImpl({required this.client});
 
@@ -38,13 +39,13 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
         'email': email,
         'password': password,
       }),
-    ).timeout(const Duration(seconds: 5));
+    ).timeout(const Duration(seconds: 15));
 
     final Map<String, dynamic> data = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
       final token = data['token'];
-      final user = data['data']; // Changed from 'user' to 'data'
+      final user = data['data'];
       if (token == null) {
         throw ServerException(message: 'Token not found in response');
       }

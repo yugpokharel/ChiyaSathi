@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:chiya_sathi/core/constants/api_constants.dart';
 import 'package:chiya_sathi/core/error/exception.dart';
 import 'package:http/http.dart' as http;
 
@@ -28,7 +29,7 @@ abstract class MenuRemoteDatasource {
 
 class MenuRemoteDatasourceImpl implements MenuRemoteDatasource {
   final http.Client client;
-  static const String baseUrl = "http://192.168.1.5:5000/api";
+  static const String baseUrl = ApiConstants.baseUrl;
 
   MenuRemoteDatasourceImpl({required this.client});
 

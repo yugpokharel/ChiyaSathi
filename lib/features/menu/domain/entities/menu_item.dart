@@ -1,4 +1,4 @@
-class MenuItem {
+import 'package:chiya_sathi/core/constants/api_constants.dart';\n\nclass MenuItem {
   final String id;
   final String name;
   final double price;
@@ -16,7 +16,7 @@ class MenuItem {
   factory MenuItem.fromJson(Map<String, dynamic> json) {
     var image = json['image'] as String?;
     if (image != null && image.isNotEmpty && !image.startsWith('http')) {
-      image = 'http://192.168.1.5:5000$image';
+      image = '${ApiConstants.serverUrl}$image';
     }
     return MenuItem(
       id: json['_id'] ?? json['id'] ?? '',
