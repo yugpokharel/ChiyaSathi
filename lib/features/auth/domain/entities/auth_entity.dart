@@ -24,17 +24,17 @@ class AuthEntity extends Equatable {
   });
 
   factory AuthEntity.fromJson(Map<String, dynamic> json) {
-  return AuthEntity(
-    id: json['_id'] ?? json['id'],
-    fullName: json['fullName'] ?? '',
-    username: json['username'] ?? '',
-    email: json['email'] ?? '',
-    phoneNumber: json['phoneNumber'] ?? '',
-    token: json['token'],
-    profilePicture: json['profilePicture'],
-    role: json['role'],
-  );
-}
+    return AuthEntity(
+      id: json['_id'] ?? json['id'],
+      fullName: json['fullName'] ?? '',
+      username: json['username'] ?? '',
+      email: json['email'] ?? '',
+      phoneNumber: json['phoneNumber'] ?? '',
+      token: json['token'],
+      profilePicture: json['profilePicture'],
+      role: json['role'],
+    );
+  }
 
   AuthEntity copyWith({
     String? id,

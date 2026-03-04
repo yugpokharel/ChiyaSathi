@@ -92,7 +92,7 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       );
     }
 
-    final response = await request.send().timeout(const Duration(seconds: 5));
+    final response = await request.send().timeout(const Duration(seconds: 15));
 
     if (response.statusCode != 201) {
       final responseBody = await response.stream.bytesToString();

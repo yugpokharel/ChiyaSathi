@@ -135,8 +135,7 @@ class OwnerHomeTab extends ConsumerWidget {
                               : null,
                           child: user?.profilePicture == null ||
                                   user!.profilePicture!.isEmpty
-                              ? Icon(Icons.person,
-                                  color: Colors.orange.shade300)
+                              ? Icon(Icons.person, color: Colors.orange.shade300)
                               : null,
                         ),
                       ),

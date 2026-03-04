@@ -24,39 +24,37 @@ class AuthRepositoryImpl implements IAuthRepository {
   @override
   Future<Either<Failure, AuthEntity>> login(
       String email, String password) async {
-    // Always try remote first if connected
-    if (await networkInfo.isConnected) {
-      try {
-        final remoteData = await remoteDataSource.login(email, password);
-        final user = AuthEntity.fromJson(remoteData['user']);
-        // Save user with password so offline login works later
-        final userWithPassword = AuthEntity(
-          id: user.id,
-          fullName: user.fullName,
-          username: user.username,
-          email: user.email,
-          phoneNumber: user.phoneNumber,
-          password: password,
-          token: user.token,
-          profilePicture: user.profilePicture,
-        );
-        await localDataSource.saveUser(AuthHiveModel.fromEntity(userWithPassword));
-        await localDataSource.saveToken(remoteData['token']);
-        return Right(user);
-      } on ServerException catch (e) {
-        // Actual API error (wrong credentials, etc.) — return immediately
-        return Left(ServerFailure(e.message));
-      } on SocketException {
-        // Network unreachable — fall through to local login
-      } on TimeoutException {
-        // Server didn't respond in time — fall through to local login
-      } catch (e) {
-        // Other unexpected errors — fall through to local login
-        print('Remote login error: $e');
-      }
+    // Always try remote first — don't rely on connectivity_plus
+    try {
+      final remoteData = await remoteDataSource.login(email, password);
+      final user = AuthEntity.fromJson(remoteData['user']);
+      // Save user with password so offline login works later
+      final userWithPassword = AuthEntity(
+        id: user.id,
+        fullName: user.fullName,
+        username: user.username,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        password: password,
+        token: user.token,
+        profilePicture: user.profilePicture,
+      );
+      await localDataSource.saveUser(AuthHiveModel.fromEntity(userWithPassword));
+      await localDataSource.saveToken(remoteData['token']);
+      return Right(user);
+    } on ServerException catch (e) {
+      // Actual API error (wrong credentials, etc.) — return immediately
+      return Left(ServerFailure(e.message));
+    } on SocketException {
+      // Network unreachable — fall through to local login
+    } on TimeoutException {
+      // Server didn't respond in time — fall through to local login
+    } catch (e) {
+      // Other unexpected errors — fall through to local login
+      print('Remote login error: $e');
     }
 
-    // Offline or remote failed — try local Hive login
+    // Remote failed (network issue) — try local Hive login
     try {
       final localUser = await localDataSource.getCurrentUser();
       if (localUser != null &&
@@ -75,25 +73,28 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<Either<Failure, bool>> register(AuthEntity authEntity) async {
-    if (await networkInfo.isConnected) {
-      try {
-        await remoteDataSource.register(
-          email: authEntity.email,
-          password: authEntity.password!,
-          fullName: authEntity.fullName,
-          username: authEntity.username,
-          phoneNumber: authEntity.phoneNumber,
-          role: authEntity.role,
-        );
-        await localDataSource.saveUser(AuthHiveModel.fromEntity(authEntity));
-        return const Right(true);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure(e.toString()));
-      }
-    } else {
+    try {
+      await remoteDataSource.register(
+        email: authEntity.email,
+        password: authEntity.password!,
+        fullName: authEntity.fullName,
+        username: authEntity.username,
+        phoneNumber: authEntity.phoneNumber,
+        role: authEntity.role,
+        profilePicture: authEntity.profilePicture != null
+            ? File(authEntity.profilePicture!)
+            : null,
+      );
+      await localDataSource.saveUser(AuthHiveModel.fromEntity(authEntity));
+      return const Right(true);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on SocketException {
       return const Left(ConnectionFailure('No internet connection'));
+    } on TimeoutException {
+      return const Left(ConnectionFailure('Server timed out. Please try again.'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -122,21 +123,21 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<Either<Failure, String>> updateProfilePicture(File image) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final token = await localDataSource.getToken();
-        if (token == null) {
-          return const Left(ServerFailure('Not authenticated'));
-        }
-        final newUrl = await remoteDataSource.updateProfilePicture(token, image);
-        return Right(newUrl);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
-      } catch (e) {
-        return Left(ServerFailure(e.toString()));
+    try {
+      final token = await localDataSource.getToken();
+      if (token == null) {
+        return const Left(ServerFailure('Not authenticated'));
       }
-    } else {
+      final newUrl = await remoteDataSource.updateProfilePicture(token, image);
+      return Right(newUrl);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on SocketException {
       return const Left(ConnectionFailure('No internet connection'));
+    } on TimeoutException {
+      return const Left(ConnectionFailure('Server timed out. Please try again.'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 }
