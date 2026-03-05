@@ -4,6 +4,7 @@ import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_mode
 import 'package:chiya_sathi/features/menu/presentation/providers/order_provider.dart';
 import 'package:chiya_sathi/features/dashboard/presentation/pages/bottom/home_screen.dart';
 import 'package:chiya_sathi/features/dashboard/presentation/pages/bottom/menu_screen.dart';
+import 'package:chiya_sathi/features/dashboard/presentation/pages/bottom/activity_screen.dart';
 import 'package:chiya_sathi/features/dashboard/presentation/pages/bottom/profile_screen.dart';
 import 'package:chiya_sathi/core/constants/api_constants.dart';
 import 'dart:io';
@@ -17,15 +18,26 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _selectedIndex = 0;
+  bool _initialTabApplied = false;
 
   final List<Widget> _lstBottomScreen = [
-    HomeScreen(),
-    MenuScreen(),
-    ProfileScreen(),
+    const HomeScreen(),
+    const MenuScreen(),
+    const ActivityScreen(),
+    const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    // Accept optional initial tab from route arguments
+    if (!_initialTabApplied) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic> && args.containsKey('tab')) {
+        _selectedIndex = args['tab'] as int;
+      }
+      _initialTabApplied = true;
+    }
+
     final authState = ref.watch(authViewModelProvider);
     final profilePicture = authState.user?.profilePicture;
     final order = ref.watch(orderProvider);
@@ -43,7 +55,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: GestureDetector(
             onTap: () {
               setState(() {
-                _selectedIndex = 2; // Navigate to Profile
+                _selectedIndex = 3; // Navigate to Profile
               });
             },
             child: CircleAvatar(
@@ -121,6 +133,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_bag),
             label: 'Menu',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long),
+            label: 'Activity',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],

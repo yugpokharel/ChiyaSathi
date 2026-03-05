@@ -207,6 +207,73 @@ class ShopOrdersNotifier extends StateNotifier<List<ShopOrder>> {
     }
   }
 
+  /// Add items to an existing order → sends PUT to API
+  Future<bool> addItemsToOrder({
+    required String orderId,
+    required List<CartItem> existingItems,
+    required List<CartItem> newItems,
+    required double newTotalAmount,
+  }) async {
+    final token = _token;
+    if (token == null) return false;
+
+    try {
+      // Merge existing + new items
+      final merged = <String, CartItem>{};
+      for (final item in existingItems) {
+        merged[item.menuItem.id] = item;
+      }
+      for (final item in newItems) {
+        if (merged.containsKey(item.menuItem.id)) {
+          final existing = merged[item.menuItem.id]!;
+          merged[item.menuItem.id] = CartItem(
+            menuItem: existing.menuItem,
+            quantity: existing.quantity + item.quantity,
+          );
+        } else {
+          merged[item.menuItem.id] = item;
+        }
+      }
+
+      final mergedJson = merged.values
+          .map((ci) => {
+                'menuItemId': ci.menuItem.id,
+                'name': ci.menuItem.name,
+                'price': ci.menuItem.price,
+                'quantity': ci.quantity,
+                'category': ci.menuItem.category,
+              })
+          .toList();
+
+      await _remoteDatasource.addItemsToOrder(
+        token: token,
+        orderId: orderId,
+        items: mergedJson,
+        totalAmount: newTotalAmount,
+      );
+
+      // Update local state
+      state = [
+        for (final o in state)
+          if (o.id == orderId)
+            ShopOrder(
+              id: o.id,
+              tableId: o.tableId,
+              items: merged.values.toList(),
+              totalAmount: newTotalAmount,
+              status: o.status,
+              orderedAt: o.orderedAt,
+              customerNote: o.customerNote,
+            )
+          else
+            o,
+      ];
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Owner accepts an order → preparing
   Future<void> acceptOrder(String orderId) async {
     await _updateStatus(orderId, ShopOrderStatus.preparing);

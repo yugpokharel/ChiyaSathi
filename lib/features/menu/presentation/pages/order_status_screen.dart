@@ -51,11 +51,11 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
               // Status text
               Text(
                 _statusTitle(order.status),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'OpenSans',
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: Colors.black,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -75,31 +75,34 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
               const SizedBox(height: 28),
               // Table info
               if (order.tableId != null)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.table_restaurant,
-                          size: 18, color: Colors.blue.shade700),
-                      const SizedBox(width: 8),
-                      Text(
-                        order.tableId!,
-                        style: TextStyle(
-                          fontFamily: 'OpenSans',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blue.shade700,
+                Builder(builder: (context) {
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
+                  return Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.blue.shade900.withAlpha(80) : Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.table_restaurant,
+                            size: 18, color: Colors.blue.shade700),
+                        const SizedBox(width: 8),
+                        Text(
+                          order.tableId!,
+                          style: TextStyle(
+                            fontFamily: 'OpenSans',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.blue.shade300 : Colors.blue.shade700,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                      ],
+                    ),
+                  );
+                }),
               const SizedBox(height: 20),
               // Order summary card
               Expanded(
@@ -107,9 +110,13 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey.shade800
+                          : Colors.grey.shade200,
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,6 +194,40 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              // "Order More" button — visible while order is pending or preparing
+              if (order.status == OrderStatus.pending ||
+                  order.status == OrderStatus.preparing)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/dashboard',
+                        (route) => false,
+                        arguments: {'tab': 1},
+                      );
+                    },
+                    icon: const Icon(Icons.add_shopping_cart_rounded),
+                    label: const Text(
+                      'Order More',
+                      style: TextStyle(
+                        fontFamily: 'OpenSans',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.orange.shade700,
+                      side: BorderSide(color: Colors.orange.shade400, width: 1.5),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 8),
               // Back to home button
               SizedBox(
                 width: double.infinity,

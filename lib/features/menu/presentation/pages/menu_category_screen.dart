@@ -78,42 +78,85 @@ class _MenuCategoryScreenState extends ConsumerState<MenuCategoryScreen> {
               ),
               child: ElevatedButton(
                 onPressed: () async {
-                  // Get table ID
-                  final box = Hive.box(HiveTableConstants.authBox);
-                  final tableId = box.get('tableId', defaultValue: '?');
+                  final activeOrder = ref.read(orderProvider);
 
-                  // Place order via API (visible to owner)
-                  final orderId =
-                      await ref.read(shopOrdersProvider.notifier).placeOrder(
-                            tableId: tableId,
-                            items: cartItems,
-                            totalAmount: totalAmount,
+                  if (activeOrder.hasActiveOrder && activeOrder.orderId != null) {
+                    // ── Add to existing order ──
+                    final newTotal = activeOrder.totalAmount + totalAmount;
+
+                    final success = await ref
+                        .read(shopOrdersProvider.notifier)
+                        .addItemsToOrder(
+                          orderId: activeOrder.orderId!,
+                          existingItems: activeOrder.items,
+                          newItems: cartItems,
+                          newTotalAmount: newTotal,
+                        );
+
+                    if (success) {
+                      // Merge into customer's local state
+                      ref.read(orderProvider.notifier).addItems(
+                            cartItems,
+                            totalAmount,
                           );
 
-                  // Place order in customer's local state with API order ID
-                  ref.read(orderProvider.notifier).placeOrder(
-                        cartItems,
-                        totalAmount,
-                        orderId: orderId,
-                        tableId: tableId,
+                      cartNotifier.clearCart();
+
+                      NotificationService().showOrderNotification(
+                        title: 'Chiya Sathi',
+                        body: 'Items added to your order!',
                       );
 
-                  // Clear the cart
-                  cartNotifier.clearCart();
+                      if (context.mounted) {
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/order_status',
+                          (route) => false,
+                        );
+                      }
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Failed to add items. Try again.'),
+                          ),
+                        );
+                      }
+                    }
+                  } else {
+                    // ── New order ──
+                    final box = Hive.box(HiveTableConstants.authBox);
+                    final tableId = box.get('tableId', defaultValue: '?');
 
-                  // Show notification
-                  NotificationService().showOrderNotification(
-                    title: 'Chiya Sathi',
-                    body: 'Your order has been placed! Waiting for confirmation.',
-                  );
+                    final orderId =
+                        await ref.read(shopOrdersProvider.notifier).placeOrder(
+                              tableId: tableId,
+                              items: cartItems,
+                              totalAmount: totalAmount,
+                            );
 
-                  // Navigate to order status
-                  if (context.mounted) {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/order_status',
-                      (route) => false,
+                    ref.read(orderProvider.notifier).placeOrder(
+                          cartItems,
+                          totalAmount,
+                          orderId: orderId,
+                          tableId: tableId,
+                        );
+
+                    cartNotifier.clearCart();
+
+                    NotificationService().showOrderNotification(
+                      title: 'Chiya Sathi',
+                      body:
+                          'Your order has been placed! Waiting for confirmation.',
                     );
+
+                    if (context.mounted) {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/order_status',
+                        (route) => false,
+                      );
+                    }
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -123,15 +166,20 @@ class _MenuCategoryScreenState extends ConsumerState<MenuCategoryScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text(
-                  'Proceed  •  Rs. ${totalAmount.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontFamily: 'OpenSans',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
+                child: Builder(builder: (context) {
+                  final hasActive = ref.watch(orderProvider).hasActiveOrder;
+                  return Text(
+                    hasActive
+                        ? 'Add to Order  •  Rs. ${totalAmount.toStringAsFixed(2)}'
+                        : 'Proceed  •  Rs. ${totalAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontFamily: 'OpenSans',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  );
+                }),
               ),
             )
           : null,

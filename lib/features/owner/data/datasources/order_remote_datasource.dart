@@ -29,6 +29,14 @@ abstract class OrderRemoteDatasource {
     required String token,
     required String orderId,
   });
+
+  /// Add items to an existing order (merge items + update total).
+  Future<Map<String, dynamic>> addItemsToOrder({
+    required String token,
+    required String orderId,
+    required List<Map<String, dynamic>> items,
+    required double totalAmount,
+  });
 }
 
 class OrderRemoteDatasourceImpl implements OrderRemoteDatasource {
@@ -177,6 +185,37 @@ class OrderRemoteDatasourceImpl implements OrderRemoteDatasource {
     } else {
       throw ServerException(
           message: data['message'] ?? 'Failed to fetch order');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> addItemsToOrder({
+    required String token,
+    required String orderId,
+    required List<Map<String, dynamic>> items,
+    required double totalAmount,
+  }) async {
+    final response = await client
+        .put(
+          Uri.parse('$baseUrl/orders/$orderId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'items': items,
+            'totalAmount': totalAmount,
+          }),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode == 200) {
+      return data['data'] ?? data;
+    } else {
+      throw ServerException(
+          message: data['message'] ?? 'Failed to add items to order');
     }
   }
 }

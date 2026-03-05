@@ -165,6 +165,31 @@ class OrderNotifier extends StateNotifier<OrderState> {
     }
   }
 
+  /// Add more items to the existing active order (merge into current state).
+  void addItems(List<CartItem> newItems, double additionalAmount) {
+    final merged = <String, CartItem>{};
+    // Start with existing items
+    for (final item in state.items) {
+      merged[item.menuItem.id] = item;
+    }
+    // Merge new items (add quantities if same item)
+    for (final item in newItems) {
+      if (merged.containsKey(item.menuItem.id)) {
+        final existing = merged[item.menuItem.id]!;
+        merged[item.menuItem.id] = CartItem(
+          menuItem: existing.menuItem,
+          quantity: existing.quantity + item.quantity,
+        );
+      } else {
+        merged[item.menuItem.id] = item;
+      }
+    }
+    state = state.copyWith(
+      items: merged.values.toList(),
+      totalAmount: state.totalAmount + additionalAmount,
+    );
+  }
+
   /// Manually refresh (pull-to-refresh)
   Future<void> refreshStatus() async {
     await _pollOrderStatus();
