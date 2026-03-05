@@ -37,8 +37,8 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
     Future.microtask(() {
       ref.read(shopOrdersProvider.notifier).fetchOrders();
     });
-    // Poll for new orders every 10 seconds
-    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+    // Poll for new orders every 15 seconds
+    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       ref.read(shopOrdersProvider.notifier).fetchOrders();
     });
   }

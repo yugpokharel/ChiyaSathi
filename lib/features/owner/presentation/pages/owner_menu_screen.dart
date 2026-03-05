@@ -298,6 +298,8 @@ class _OwnerMenuScreenState extends ConsumerState<OwnerMenuScreen> {
                             ? SizedBox.expand(
                                 child: Image.network(
                                   item.image!,
+                                  cacheWidth: 300,
+                                  cacheHeight: 300,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => Column(
                                     mainAxisAlignment:
@@ -594,6 +596,8 @@ class _MenuItemTile extends StatelessWidget {
                     item.image!,
                     width: 40,
                     height: 40,
+                    cacheWidth: 80,
+                    cacheHeight: 80,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       width: 40,

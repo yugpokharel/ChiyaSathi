@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:http/http.dart' as http;
 import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
+import 'package:chiya_sathi/core/providers/http_client_provider.dart';
 import 'package:chiya_sathi/features/menu/data/datasources/menu_remote_datasource.dart';
 import 'package:chiya_sathi/features/menu/data/repositories/menu_repository.dart';
 import 'package:chiya_sathi/features/menu/domain/entities/menu_item.dart';
@@ -9,7 +9,7 @@ import 'package:chiya_sathi/features/menu/domain/entities/menu_item.dart';
 // ── Datasource provider ────────────────────────────────────────────────────
 
 final menuRemoteDatasourceProvider = Provider<MenuRemoteDatasource>(
-  (ref) => MenuRemoteDatasourceImpl(client: http.Client()),
+  (ref) => MenuRemoteDatasourceImpl(client: ref.watch(httpClientProvider)),
 );
 
 // ── Menu state ─────────────────────────────────────────────────────────────

@@ -551,6 +551,8 @@ class _OwnerProfileScreenState extends ConsumerState<OwnerProfileScreen> {
           : '${ApiConstants.serverUrl}$imagePath';
       return Image.network(
         url,
+        cacheWidth: 300,
+        cacheHeight: 300,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => Container(
           color: Theme.of(context).cardColor,

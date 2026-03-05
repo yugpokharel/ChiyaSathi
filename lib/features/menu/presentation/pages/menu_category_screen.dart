@@ -217,6 +217,8 @@ class _MenuItemCard extends StatelessWidget {
                       item.image!,
                       width: 80,
                       height: 80,
+                      cacheWidth: 160,
+                      cacheHeight: 160,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(

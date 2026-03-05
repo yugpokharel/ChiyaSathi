@@ -6,12 +6,12 @@ import 'package:chiya_sathi/features/auth/domain/repositories/auth_repository.da
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
-import 'package:http/http.dart' as http;
+import 'package:chiya_sathi/core/providers/http_client_provider.dart';
 
 import '../../../../core/constants/hive_table_constants.dart';
 
 final authRemoteDatasourceProvider = Provider<AuthRemoteDatasource>(
-  (ref) => AuthRemoteDatasourceImpl(client: http.Client()),
+  (ref) => AuthRemoteDatasourceImpl(client: ref.watch(httpClientProvider)),
 );
 
 final authLocalDatasourceProvider = Provider<AuthLocalDatasource>(

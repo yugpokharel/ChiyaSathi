@@ -510,6 +510,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       return Image.network(
         url,
+        cacheWidth: 300,
+        cacheHeight: 300,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
           return Container(

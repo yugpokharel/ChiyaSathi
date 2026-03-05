@@ -18,7 +18,7 @@ class HomeScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ValueListenableBuilder(
-              valueListenable: box.listenable(),
+              valueListenable: box.listenable(keys: ['tableId']),
               builder: (context, Box b, _) {
                 final tableId = b.get('tableId') as String?;
                 final isOnline = tableId != null;
@@ -203,7 +203,7 @@ class HomeScreen extends ConsumerWidget {
 
             const SizedBox(height: 24),
             ValueListenableBuilder(
-              valueListenable: box.listenable(),
+              valueListenable: box.listenable(keys: ['tableId']),
               builder: (context, Box b, _) {
                 final tableId = b.get('tableId') as String?;
                 if (tableId == null) {

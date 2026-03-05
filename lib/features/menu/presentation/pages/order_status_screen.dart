@@ -132,38 +132,83 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
                       ),
                       const SizedBox(height: 12),
                       Expanded(
-                        child: ListView(
-                          children: order.items
-                              .map(
-                                (item) => Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 4),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          '${item.menuItem.name} x${item.quantity}',
-                                          style: const TextStyle(
-                                            fontFamily: 'OpenSans',
-                                            fontSize: 14,
-                                          ),
-                                        ),
+                        child: ListView.builder(
+                          itemCount: order.items.length,
+                          itemBuilder: (context, index) {
+                            final item = order.items[index];
+                            final canRemove =
+                                order.status == OrderStatus.pending;
+
+                            final child = Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      '${item.menuItem.name} x${item.quantity}',
+                                      style: const TextStyle(
+                                        fontFamily: 'OpenSans',
+                                        fontSize: 14,
                                       ),
-                                      Text(
-                                        'Rs. ${item.totalPrice.toStringAsFixed(0)}',
-                                        style: const TextStyle(
-                                          fontFamily: 'OpenSans',
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
+                                  Text(
+                                    'Rs. ${item.totalPrice.toStringAsFixed(0)}',
+                                    style: const TextStyle(
+                                      fontFamily: 'OpenSans',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (!canRemove) return child;
+
+                            return Dismissible(
+                              key: ValueKey(item.menuItem.id),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding:
+                                    const EdgeInsets.only(right: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade400,
+                                  borderRadius:
+                                      BorderRadius.circular(8),
                                 ),
-                              )
-                              .toList(),
+                                child: const Icon(Icons.delete_outline,
+                                    color: Colors.white, size: 20),
+                              ),
+                              confirmDismiss: (_) async {
+                                if (order.items.length == 1) {
+                                  // Last item — confirm full cancel
+                                  return await _confirmCancelOrder(
+                                      context);
+                                }
+                                return true;
+                              },
+                              onDismissed: (_) async {
+                                final success = await ref
+                                    .read(orderProvider.notifier)
+                                    .removeItem(item.menuItem.id);
+                                if (!success && context.mounted) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Failed to remove item'),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: child,
+                            );
+                          },
                         ),
                       ),
                       const Divider(height: 24),
@@ -220,6 +265,32 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.orange.shade700,
                       side: BorderSide(color: Colors.orange.shade400, width: 1.5),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              // Cancel Order button — only when pending
+              if (order.status == OrderStatus.pending)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _handleCancelOrder(context, ref),
+                    icon: const Icon(Icons.cancel_outlined, size: 18),
+                    label: const Text(
+                      'Cancel Order',
+                      style: TextStyle(
+                        fontFamily: 'OpenSans',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red.shade600,
+                      side: BorderSide(color: Colors.red.shade300, width: 1.5),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -300,6 +371,82 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
         return 'Enjoy your meal!';
       case OrderStatus.cancelled:
         return 'Sorry, your order was cancelled.';
+    }
+  }
+
+  Future<bool> _confirmCancelOrder(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text(
+              'Cancel Order?',
+              style: TextStyle(
+                fontFamily: 'OpenSans',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            content: const Text(
+              'Removing the last item will cancel the entire order. Continue?',
+              style: TextStyle(fontFamily: 'OpenSans'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Keep'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Cancel Order'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _handleCancelOrder(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Cancel Order?',
+          style: TextStyle(
+            fontFamily: 'OpenSans',
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to cancel this order?',
+          style: TextStyle(fontFamily: 'OpenSans'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('No, Keep It'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final success = await ref.read(orderProvider.notifier).cancelOrder();
+      if (context.mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Order cancelled')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to cancel order')),
+          );
+        }
+      }
     }
   }
 }

@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chiya_sathi/core/services/notification_service.dart';
+import 'package:chiya_sathi/core/providers/http_client_provider.dart';
 import 'package:chiya_sathi/features/menu/domain/entities/cart_item.dart';
 import 'package:chiya_sathi/features/menu/domain/entities/menu_item.dart';
 import 'package:chiya_sathi/features/owner/data/datasources/order_remote_datasource.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
-import 'package:http/http.dart' as http;
 
 enum ShopOrderStatus { pending, preparing, ready, served, cancelled }
 
@@ -366,7 +366,7 @@ class ShopOrdersNotifier extends StateNotifier<List<ShopOrder>> {
 }
 
 final orderRemoteDatasourceProvider = Provider<OrderRemoteDatasource>(
-  (ref) => OrderRemoteDatasourceImpl(client: http.Client()),
+  (ref) => OrderRemoteDatasourceImpl(client: ref.watch(httpClientProvider)),
 );
 
 final shopOrdersProvider =

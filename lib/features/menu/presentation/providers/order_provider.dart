@@ -112,7 +112,7 @@ class OrderNotifier extends StateNotifier<OrderState> {
 
   void _startPolling() {
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       _pollOrderStatus();
     });
   }
@@ -193,6 +193,69 @@ class OrderNotifier extends StateNotifier<OrderState> {
   /// Manually refresh (pull-to-refresh)
   Future<void> refreshStatus() async {
     await _pollOrderStatus();
+  }
+
+  /// Cancel the entire active order via API.
+  Future<bool> cancelOrder() async {
+    final orderId = state.orderId;
+    final token = _token;
+    if (orderId == null || token == null) return false;
+
+    try {
+      await _remote.updateOrderStatus(
+        token: token,
+        orderId: orderId,
+        status: 'cancelled',
+      );
+      stopPolling();
+      state = state.copyWith(status: OrderStatus.cancelled);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Remove a single item from the active order.
+  /// If it's the last item, cancels the order instead.
+  Future<bool> removeItem(String menuItemId) async {
+    final orderId = state.orderId;
+    final token = _token;
+    if (orderId == null || token == null) return false;
+
+    final updatedItems =
+        state.items.where((i) => i.menuItem.id != menuItemId).toList();
+
+    // If removing the last item, cancel the order
+    if (updatedItems.isEmpty) {
+      return cancelOrder();
+    }
+
+    final newTotal =
+        updatedItems.fold<double>(0, (sum, i) => sum + i.totalPrice);
+
+    try {
+      final itemsJson = updatedItems
+          .map((ci) => {
+                'menuItemId': ci.menuItem.id,
+                'name': ci.menuItem.name,
+                'price': ci.menuItem.price,
+                'quantity': ci.quantity,
+                'category': ci.menuItem.category,
+              })
+          .toList();
+
+      await _remote.addItemsToOrder(
+        token: token,
+        orderId: orderId,
+        items: itemsJson,
+        totalAmount: newTotal,
+      );
+
+      state = state.copyWith(items: updatedItems, totalAmount: newTotal);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   void clearOrder() {
