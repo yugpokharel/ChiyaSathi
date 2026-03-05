@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:chiya_sathi/core/constants/hive_table_constants.dart';
@@ -165,14 +166,23 @@ class OrderNotifier extends StateNotifier<OrderState> {
     }
   }
 
-  /// Add more items to the existing active order (merge into current state).
-  void addItems(List<CartItem> newItems, double additionalAmount) {
+  /// Add more items to the existing active order via PUT /api/orders/:id.
+  /// Returns null on success, or an error message string on failure.
+  Future<String?> addItemsToOrder(List<CartItem> newItems, double additionalAmount) async {
+    final orderId = state.orderId;
+    final token = _token;
+    if (orderId == null) {
+      return 'No active order found. Please place a new order.';
+    }
+    if (token == null) {
+      return 'Authentication token missing. Please log in again.';
+    }
+
+    // Merge existing + new items
     final merged = <String, CartItem>{};
-    // Start with existing items
     for (final item in state.items) {
       merged[item.menuItem.id] = item;
     }
-    // Merge new items (add quantities if same item)
     for (final item in newItems) {
       if (merged.containsKey(item.menuItem.id)) {
         final existing = merged[item.menuItem.id]!;
@@ -184,10 +194,77 @@ class OrderNotifier extends StateNotifier<OrderState> {
         merged[item.menuItem.id] = item;
       }
     }
-    state = state.copyWith(
-      items: merged.values.toList(),
-      totalAmount: state.totalAmount + additionalAmount,
-    );
+
+    final mergedList = merged.values.toList();
+    final newTotal = mergedList.fold<double>(0, (sum, i) => sum + i.totalPrice);
+
+    try {
+      final itemsJson = mergedList
+          .map((ci) => {
+                'menuItemId': ci.menuItem.id,
+                'name': ci.menuItem.name,
+                'price': ci.menuItem.price,
+                'quantity': ci.quantity,
+                'category': ci.menuItem.category,
+              })
+          .toList();
+
+      await _remote.addItemsToOrder(
+        token: token,
+        orderId: orderId,
+        items: itemsJson,
+        totalAmount: newTotal,
+      );
+
+      state = state.copyWith(items: mergedList, totalAmount: newTotal);
+      return null; // success
+    } catch (e) {
+      debugPrint('[addItemsToOrder] Error: $e');
+      return e.toString();
+    }
+  }
+
+  /// Save edited items (modified quantities, removed items) via PUT.
+  /// Returns null on success, or an error message on failure.
+  Future<String?> saveEditedItems(List<CartItem> editedItems) async {
+    final orderId = state.orderId;
+    final token = _token;
+    if (orderId == null || token == null) return 'Missing order or token';
+
+    // Filter out items with quantity <= 0
+    final validItems = editedItems.where((i) => i.quantity > 0).toList();
+
+    if (validItems.isEmpty) {
+      // All items removed — cancel order
+      return await cancelOrder();
+    }
+
+    final newTotal = validItems.fold<double>(0, (sum, i) => sum + i.totalPrice);
+
+    try {
+      final itemsJson = validItems
+          .map((ci) => {
+                'menuItemId': ci.menuItem.id,
+                'name': ci.menuItem.name,
+                'price': ci.menuItem.price,
+                'quantity': ci.quantity,
+                'category': ci.menuItem.category,
+              })
+          .toList();
+
+      await _remote.addItemsToOrder(
+        token: token,
+        orderId: orderId,
+        items: itemsJson,
+        totalAmount: newTotal,
+      );
+
+      state = state.copyWith(items: validItems, totalAmount: newTotal);
+      return null;
+    } catch (e) {
+      debugPrint('[saveEditedItems] Error: $e');
+      return e.toString();
+    }
   }
 
   /// Manually refresh (pull-to-refresh)
@@ -196,26 +273,43 @@ class OrderNotifier extends StateNotifier<OrderState> {
   }
 
   /// Cancel the entire active order via API.
-  Future<bool> cancelOrder() async {
+  /// Returns null on success, or an error message on failure.
+  Future<String?> cancelOrder() async {
     final orderId = state.orderId;
     final token = _token;
-    if (orderId == null || token == null) return false;
+    if (orderId == null) return 'No active order to cancel';
+    if (token == null) return 'Authentication token missing';
 
     try {
-      await _remote.updateOrderStatus(
+      // Use the general PUT /orders/:id route (customer-accessible)
+      // instead of the owner-only /orders/:id/status route.
+      final itemsJson = state.items
+          .map((ci) => {
+                'menuItemId': ci.menuItem.id,
+                'name': ci.menuItem.name,
+                'price': ci.menuItem.price,
+                'quantity': ci.quantity,
+                'category': ci.menuItem.category,
+              })
+          .toList();
+
+      await _remote.addItemsToOrder(
         token: token,
         orderId: orderId,
+        items: itemsJson,
+        totalAmount: state.totalAmount,
         status: 'cancelled',
       );
       stopPolling();
       state = state.copyWith(status: OrderStatus.cancelled);
-      return true;
-    } catch (_) {
-      return false;
+      return null; // success
+    } catch (e) {
+      debugPrint('[cancelOrder] Error: $e');
+      return e.toString();
     }
   }
 
-  /// Remove a single item from the active order.
+  /// Remove a single item from the active order via PUT /api/orders/:id.
   /// If it's the last item, cancels the order instead.
   Future<bool> removeItem(String menuItemId) async {
     final orderId = state.orderId;
@@ -227,7 +321,8 @@ class OrderNotifier extends StateNotifier<OrderState> {
 
     // If removing the last item, cancel the order
     if (updatedItems.isEmpty) {
-      return cancelOrder();
+      final err = await cancelOrder();
+      return err == null;
     }
 
     final newTotal =
@@ -253,7 +348,8 @@ class OrderNotifier extends StateNotifier<OrderState> {
 
       state = state.copyWith(items: updatedItems, totalAmount: newTotal);
       return true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[removeItem] Error: $e');
       return false;
     }
   }

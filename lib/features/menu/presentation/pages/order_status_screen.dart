@@ -1,3 +1,4 @@
+import 'package:chiya_sathi/features/menu/domain/entities/cart_item.dart';
 import 'package:chiya_sathi/features/menu/presentation/providers/order_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,9 +11,57 @@ class OrderStatusScreen extends ConsumerStatefulWidget {
 }
 
 class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
+  bool _isEditing = false;
+  List<CartItem>? _editedItems;
+  bool _isSaving = false;
+
+  void _startEditing(List<CartItem> currentItems) {
+    setState(() {
+      _isEditing = true;
+      // Deep copy so we can modify quantities without affecting provider state
+      _editedItems = currentItems
+          .map((i) => CartItem(menuItem: i.menuItem, quantity: i.quantity))
+          .toList();
+    });
+  }
+
+  void _cancelEditing() {
+    setState(() {
+      _isEditing = false;
+      _editedItems = null;
+    });
+  }
+
+  Future<void> _saveEdits() async {
+    if (_editedItems == null) return;
+    setState(() => _isSaving = true);
+
+    final error = await ref
+        .read(orderProvider.notifier)
+        .saveEditedItems(_editedItems!);
+
+    if (mounted) {
+      setState(() {
+        _isSaving = false;
+        if (error == null) {
+          _isEditing = false;
+          _editedItems = null;
+        }
+      });
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $error')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Order updated!')),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
-    // Keep polling even when navigating away — it will auto-stop on served/cancelled
     super.dispose();
   }
 
@@ -122,94 +171,83 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        'Order Summary',
-                        style: TextStyle(
-                          fontFamily: 'OpenSans',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: order.items.length,
-                          itemBuilder: (context, index) {
-                            final item = order.items[index];
-                            final canRemove =
-                                order.status == OrderStatus.pending;
-
-                            final child = Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      '${item.menuItem.name} x${item.quantity}',
-                                      style: const TextStyle(
-                                        fontFamily: 'OpenSans',
-                                        fontSize: 14,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Order Summary',
+                            style: TextStyle(
+                              fontFamily: 'OpenSans',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (order.status == OrderStatus.pending ||
+                              order.status == OrderStatus.preparing)
+                            Row(
+                              children: [
+                                if (_isEditing)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: GestureDetector(
+                                      onTap: _isSaving ? null : _cancelEditing,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade100,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(
+                                          Icons.close_rounded,
+                                          size: 18,
+                                          color: Colors.grey.shade700,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                  Text(
-                                    'Rs. ${item.totalPrice.toStringAsFixed(0)}',
-                                    style: const TextStyle(
-                                      fontFamily: 'OpenSans',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
+                                GestureDetector(
+                                  onTap: _isSaving
+                                      ? null
+                                      : _isEditing
+                                          ? _saveEdits
+                                          : () => _startEditing(order.items),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: _isEditing
+                                          ? Colors.green.shade50
+                                          : Colors.orange.shade50,
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
+                                    child: _isSaving
+                                        ? SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.orange.shade700,
+                                            ),
+                                          )
+                                        : Icon(
+                                            _isEditing
+                                                ? Icons.check_rounded
+                                                : Icons.edit_outlined,
+                                            size: 18,
+                                            color: _isEditing
+                                                ? Colors.green.shade700
+                                                : Colors.orange.shade700,
+                                          ),
                                   ),
-                                ],
-                              ),
-                            );
-
-                            if (!canRemove) return child;
-
-                            return Dismissible(
-                              key: ValueKey(item.menuItem.id),
-                              direction: DismissDirection.endToStart,
-                              background: Container(
-                                alignment: Alignment.centerRight,
-                                padding:
-                                    const EdgeInsets.only(right: 16),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade400,
-                                  borderRadius:
-                                      BorderRadius.circular(8),
                                 ),
-                                child: const Icon(Icons.delete_outline,
-                                    color: Colors.white, size: 20),
-                              ),
-                              confirmDismiss: (_) async {
-                                if (order.items.length == 1) {
-                                  // Last item — confirm full cancel
-                                  return await _confirmCancelOrder(
-                                      context);
-                                }
-                                return true;
-                              },
-                              onDismissed: (_) async {
-                                final success = await ref
-                                    .read(orderProvider.notifier)
-                                    .removeItem(item.menuItem.id);
-                                if (!success && context.mounted) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Failed to remove item'),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: child,
-                            );
-                          },
-                        ),
+                              ],
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: _isEditing && _editedItems != null
+                            ? _buildEditableList()
+                            : _buildReadOnlyList(order),
                       ),
                       const Divider(height: 24),
                       Row(
@@ -224,7 +262,9 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
                             ),
                           ),
                           Text(
-                            'Rs. ${order.totalAmount.toStringAsFixed(0)}',
+                            _isEditing && _editedItems != null
+                                ? 'Rs. ${_editedItems!.where((i) => i.quantity > 0).fold<double>(0, (s, i) => s + i.totalPrice).toStringAsFixed(0)}'
+                                : 'Rs. ${order.totalAmount.toStringAsFixed(0)}',
                             style: TextStyle(
                               fontFamily: 'OpenSans',
                               fontSize: 16,
@@ -374,35 +414,125 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
     }
   }
 
-  Future<bool> _confirmCancelOrder(BuildContext context) async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text(
-              'Cancel Order?',
-              style: TextStyle(
-                fontFamily: 'OpenSans',
-                fontWeight: FontWeight.w700,
+  Widget _buildReadOnlyList(dynamic order) {
+    return ListView.builder(
+      itemCount: order.items.length,
+      itemBuilder: (context, index) {
+        final item = order.items[index];
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  '${item.menuItem.name} x${item.quantity}',
+                  style: const TextStyle(
+                    fontFamily: 'OpenSans',
+                    fontSize: 14,
+                  ),
+                ),
               ),
-            ),
-            content: const Text(
-              'Removing the last item will cancel the entire order. Continue?',
-              style: TextStyle(fontFamily: 'OpenSans'),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Keep'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Cancel Order'),
+              Text(
+                'Rs. ${item.totalPrice.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  fontFamily: 'OpenSans',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
-        ) ??
-        false;
+        );
+      },
+    );
+  }
+
+  Widget _buildEditableList() {
+    final items = _editedItems!;
+    return ListView.builder(
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        if (item.quantity <= 0) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  item.menuItem.name,
+                  style: const TextStyle(
+                    fontFamily: 'OpenSans',
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              // Minus button
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    items[index] = CartItem(
+                      menuItem: item.menuItem,
+                      quantity: item.quantity - 1,
+                    );
+                  });
+                },
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(Icons.remove, size: 16, color: Colors.red.shade700),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  '${item.quantity}',
+                  style: const TextStyle(
+                    fontFamily: 'OpenSans',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              // Plus button
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    items[index] = CartItem(
+                      menuItem: item.menuItem,
+                      quantity: item.quantity + 1,
+                    );
+                  });
+                },
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(Icons.add, size: 16, color: Colors.green.shade700),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Rs. ${item.totalPrice.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  fontFamily: 'OpenSans',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _handleCancelOrder(BuildContext context, WidgetRef ref) async {
@@ -435,15 +565,18 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
     );
 
     if (confirmed == true) {
-      final success = await ref.read(orderProvider.notifier).cancelOrder();
+      final error = await ref.read(orderProvider.notifier).cancelOrder();
       if (context.mounted) {
-        if (success) {
+        if (error == null) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Order cancelled')),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to cancel order')),
+            SnackBar(
+              content: Text('Cancel failed: $error'),
+              duration: const Duration(seconds: 5),
+            ),
           );
         }
       }

@@ -36,6 +36,8 @@ abstract class OrderRemoteDatasource {
     required String orderId,
     required List<Map<String, dynamic>> items,
     required double totalAmount,
+    String? status,
+    String? tableId,
   });
 }
 
@@ -109,39 +111,49 @@ class OrderRemoteDatasourceImpl implements OrderRemoteDatasource {
     required String orderId,
     required String status,
   }) async {
-    // Try /orders/:id/status first, fall back to /orders/:id
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+    final statusBody = jsonEncode({'status': status});
+
+    // Try /orders/:id/status first
     var response = await client
         .put(
           Uri.parse('$baseUrl/orders/$orderId/status'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-          body: jsonEncode({'status': status}),
+          headers: headers,
+          body: statusBody,
         )
         .timeout(const Duration(seconds: 10));
 
-    if (response.statusCode == 404) {
-      // Fallback: try PUT /orders/:id with status in body
+    // If that route doesn't exist, use the generic PUT /orders/:id
+    if (response.statusCode == 404 || response.statusCode == 405) {
       response = await client
           .put(
             Uri.parse('$baseUrl/orders/$orderId'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-            body: jsonEncode({'status': status}),
+            headers: headers,
+            body: statusBody,
           )
           .timeout(const Duration(seconds: 10));
     }
 
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-
-    if (response.statusCode == 200) {
-      return data['data'] ?? data;
+    // Guard against non-JSON responses (e.g. HTML error pages)
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      try {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['data'] ?? data;
+      } catch (_) {
+        return {'status': status};
+      }
     } else {
-      throw ServerException(
-          message: data['message'] ?? 'Failed to update order status');
+      String msg;
+      try {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        msg = data['message'] ?? 'Failed to update order status (${response.statusCode})';
+      } catch (_) {
+        msg = 'Failed to update order status (${response.statusCode})';
+      }
+      throw ServerException(message: msg);
     }
   }
 
@@ -194,7 +206,16 @@ class OrderRemoteDatasourceImpl implements OrderRemoteDatasource {
     required String orderId,
     required List<Map<String, dynamic>> items,
     required double totalAmount,
+    String? status,
+    String? tableId,
   }) async {
+    final body = <String, dynamic>{
+      'items': items,
+      'totalAmount': totalAmount,
+    };
+    if (status != null) body['status'] = status;
+    if (tableId != null) body['tableId'] = tableId;
+
     final response = await client
         .put(
           Uri.parse('$baseUrl/orders/$orderId'),
@@ -202,20 +223,18 @@ class OrderRemoteDatasourceImpl implements OrderRemoteDatasource {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
           },
-          body: jsonEncode({
-            'items': items,
-            'totalAmount': totalAmount,
-          }),
+          body: jsonEncode(body),
         )
-        .timeout(const Duration(seconds: 10));
+        .timeout(const Duration(seconds: 15));
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return data['data'] ?? data;
     } else {
       throw ServerException(
-          message: data['message'] ?? 'Failed to add items to order');
+        message: data['message'] ?? 'Failed to update order (${response.statusCode})',
+      );
     }
   }
 }

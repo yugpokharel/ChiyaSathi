@@ -82,24 +82,11 @@ class _MenuCategoryScreenState extends ConsumerState<MenuCategoryScreen> {
 
                   if (activeOrder.hasActiveOrder && activeOrder.orderId != null) {
                     // ── Add to existing order ──
-                    final newTotal = activeOrder.totalAmount + totalAmount;
+                    final error = await ref
+                        .read(orderProvider.notifier)
+                        .addItemsToOrder(cartItems, totalAmount);
 
-                    final success = await ref
-                        .read(shopOrdersProvider.notifier)
-                        .addItemsToOrder(
-                          orderId: activeOrder.orderId!,
-                          existingItems: activeOrder.items,
-                          newItems: cartItems,
-                          newTotalAmount: newTotal,
-                        );
-
-                    if (success) {
-                      // Merge into customer's local state
-                      ref.read(orderProvider.notifier).addItems(
-                            cartItems,
-                            totalAmount,
-                          );
-
+                    if (error == null) {
                       cartNotifier.clearCart();
 
                       NotificationService().showOrderNotification(
@@ -117,8 +104,9 @@ class _MenuCategoryScreenState extends ConsumerState<MenuCategoryScreen> {
                     } else {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Failed to add items. Try again.'),
+                          SnackBar(
+                            content: Text('Error: $error'),
+                            duration: const Duration(seconds: 5),
                           ),
                         );
                       }

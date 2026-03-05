@@ -245,11 +245,14 @@ class ShopOrdersNotifier extends StateNotifier<List<ShopOrder>> {
               })
           .toList();
 
+      final currentOrder = state.firstWhere((o) => o.id == orderId, orElse: () => state.first);
       await _remoteDatasource.addItemsToOrder(
         token: token,
         orderId: orderId,
         items: mergedJson,
         totalAmount: newTotalAmount,
+        status: currentOrder.status.name,
+        tableId: currentOrder.tableId,
       );
 
       // Update local state
