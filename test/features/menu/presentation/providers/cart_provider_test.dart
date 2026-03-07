@@ -1,4 +1,3 @@
-import 'package:chiya_sathi/features/menu/domain/entities/cart_item.dart';
 import 'package:chiya_sathi/features/menu/domain/entities/menu_item.dart';
 import 'package:chiya_sathi/features/menu/presentation/providers/cart_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

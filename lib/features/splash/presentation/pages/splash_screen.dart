@@ -25,7 +25,6 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Logo: scale + fade in (0 → 800ms)
     _logoController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -37,7 +36,6 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _logoController, curve: Curves.easeIn),
     );
 
-    // Content: title, tagline, loader (staggered 400ms → 1600ms)
     _contentController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -136,7 +134,6 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             children: [
               const Spacer(flex: 3),
-              // ── Animated Logo ──
               AnimatedBuilder(
                 animation: _logoController,
                 builder: (context, child) {
@@ -172,7 +169,6 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
               const SizedBox(height: 32),
-              // ── Animated Title ──
               AnimatedBuilder(
                 animation: _contentController,
                 builder: (context, child) {

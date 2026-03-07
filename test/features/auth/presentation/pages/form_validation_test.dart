@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Tests for form validation patterns used in login/signup screens.
 void main() {
   group('Form Validation Widget Tests', () {
     testWidgets('empty email shows validation error', (tester) async {
