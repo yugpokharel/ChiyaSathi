@@ -59,6 +59,7 @@ class MyApp extends ConsumerWidget {
             totalAmount: args?['totalAmount'] ?? 0.0,
           );
         },
+        '/admin_scan_bill': (context) => const AdminScanBillScreen(),
       },
       onGenerateRoute: (settings) {
         // Handle dynamic /menu/<category> routes
