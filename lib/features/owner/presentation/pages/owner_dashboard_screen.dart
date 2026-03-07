@@ -72,6 +72,14 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
                 icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
+        floatingActionButton: FloatingActionButton.extended(
+          icon: const Icon(Icons.qr_code_scanner),
+          label: const Text('Scan Bill'),
+          backgroundColor: Colors.orange.shade700,
+          onPressed: () {
+            Navigator.pushNamed(context, '/admin_scan_bill');
+          },
+        ),
       ),
     );
   }
