@@ -12,9 +12,9 @@ class _AdminScanBillScreenState extends State<AdminScanBillScreen> {
   String? billId;
   String? scannedData;
 
-  void _onScan(Barcode barcode, MobileScannerArguments? args) {
+  void _onDetect(BarcodeCapture capture) {
     setState(() {
-      scannedData = barcode.rawValue;
+      scannedData = capture.barcodes.isNotEmpty ? capture.barcodes.first.rawValue : null;
     });
   }
 
@@ -48,7 +48,7 @@ class _AdminScanBillScreenState extends State<AdminScanBillScreen> {
             SizedBox(
               height: 220,
               child: MobileScanner(
-                onDetect: _onScan,
+                onDetect: _onDetect,
               ),
             ),
             if (scannedData != null) ...[

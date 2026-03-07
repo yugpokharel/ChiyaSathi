@@ -15,6 +15,9 @@ import 'package:chiya_sathi/features/menu/presentation/pages/menu_category_scree
 import 'package:chiya_sathi/features/menu/presentation/pages/order_status_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chiya_sathi/features/payment/presentation/pages/generate_bill_screen.dart';
+import 'package:chiya_sathi/features/payment/presentation/pages/show_qr_screen.dart';
+import 'package:chiya_sathi/features/payment/presentation/pages/admin_scan_bill_screen.dart';
 
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});

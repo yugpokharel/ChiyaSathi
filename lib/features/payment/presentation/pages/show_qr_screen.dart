@@ -30,10 +30,10 @@ class ShowQrScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            QrImage(
-              data: qrData,
-              size: 220,
-            ),
+              QrImageView(
+                data: qrData,
+                size: 220,
+              ),
             const SizedBox(height: 24),
             Text('Show this QR at the counter'),
             const SizedBox(height: 12),
