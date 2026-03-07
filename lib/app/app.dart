@@ -2,6 +2,9 @@ import 'package:chiya_sathi/features/dashboard/presentation/pages/dashboard_scre
 import 'package:chiya_sathi/features/auth/presentation/pages/login_screen.dart';
 import 'package:chiya_sathi/features/onboarding/presentation/pages/onboarding_screen.dart';
 import 'package:chiya_sathi/features/auth/presentation/pages/signup_screen.dart';
+import 'package:chiya_sathi/features/auth/presentation/pages/forgot_password_screen.dart';
+import 'package:chiya_sathi/features/auth/presentation/pages/verify_otp_screen.dart';
+import 'package:chiya_sathi/features/auth/presentation/pages/reset_password_screen.dart';
 import 'package:chiya_sathi/features/splash/presentation/pages/splash_screen.dart';
 import 'package:chiya_sathi/features/qr_scanner/presentation/pages/qr_scanner_screen.dart';
 import 'package:chiya_sathi/features/role_selection/presentation/pages/role_selection_screen.dart';
@@ -33,10 +36,29 @@ class MyApp extends ConsumerWidget {
         '/role_selection': (context) => const RoleSelectionScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
+        '/forgot_password': (context) => const ForgotPasswordScreen(),
+        '/verify_otp': (context) => const VerifyOtpScreen(),
+        '/reset_password': (context) => const ResetPasswordScreen(),
         '/dashboard': (context) => const DashboardScreen(),
         '/owner_dashboard': (context) => const OwnerDashboardScreen(),
         '/qr_scanner': (context) => const QRScannerScreen(),
         '/order_status': (context) => const OrderStatusScreen(),
+        '/generate_bill': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          return GenerateBillScreen(
+            orderId: args?['orderId'] ?? '',
+            tableId: args?['tableId'] ?? '',
+            totalAmount: args?['totalAmount'] ?? 0.0,
+          );
+        },
+        '/show_qr': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          return ShowQrScreen(
+            orderId: args?['orderId'] ?? '',
+            tableId: args?['tableId'] ?? '',
+            totalAmount: args?['totalAmount'] ?? 0.0,
+          );
+        },
       },
       onGenerateRoute: (settings) {
         // Handle dynamic /menu/<category> routes
