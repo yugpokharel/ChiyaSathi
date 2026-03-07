@@ -373,6 +373,61 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              if (order.status == OrderStatus.ready)
+                Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.receipt_long),
+                        label: const Text('Generate Bill'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange.shade700,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/generate_bill',
+                            arguments: {
+                              'orderId': order.orderId,
+                              'tableId': order.tableId,
+                              'totalAmount': order.totalAmount,
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.add_shopping_cart_rounded),
+                        label: const Text('Order More?'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.orange.shade700,
+                          side: BorderSide(color: Colors.orange.shade400, width: 1.5),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/dashboard',
+                            (route) => false,
+                            arguments: {'tab': 1},
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 8),
             ],
           ),
         ),
