@@ -21,6 +21,16 @@ abstract class AuthRemoteDatasource {
   Future<AuthEntity> getCurrentUser(String token);
 
   Future<String> updateProfilePicture(String token, File image);
+
+  Future<void> forgotPassword(String email);
+
+  Future<void> verifyOtp({required String email, required String otp});
+
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String password,
+  });
 }
 
 class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
@@ -143,6 +153,52 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       throw ServerException(
         message: data['message'] ?? 'Failed to update profile picture',
       );
+    }
+  }
+
+  @override
+  Future<void> forgotPassword(String email) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/auth/forgot-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email}),
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ServerException(message: data['message'] ?? 'Failed to send OTP');
+    }
+  }
+
+  @override
+  Future<void> verifyOtp({required String email, required String otp}) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/auth/verify-otp'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'otp': otp}),
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ServerException(message: data['message'] ?? 'Invalid or expired OTP');
+    }
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String password,
+  }) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/auth/reset-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'otp': otp, 'password': password}),
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ServerException(message: data['message'] ?? 'Failed to reset password');
     }
   }
 }

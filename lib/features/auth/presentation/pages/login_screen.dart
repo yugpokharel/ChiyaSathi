@@ -308,6 +308,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
 
+              const SizedBox(height: 12),
+
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.pushNamed(context, '/forgot_password'),
+                  child: Text(
+                    'Forgot Password?',
+                    style: TextStyle(
+                      color: Colors.orange.shade600,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 24),
 
               // Biometric login button
