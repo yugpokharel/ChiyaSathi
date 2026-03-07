@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chiya_sathi/features/payment/presentation/pages/generate_bill_screen.dart';
 import 'package:chiya_sathi/features/payment/presentation/pages/show_qr_screen.dart';
 import 'package:chiya_sathi/features/payment/presentation/pages/admin_scan_bill_screen.dart';
+import 'package:chiya_sathi/features/payment/data/models/bill_model.dart';
 
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
@@ -49,17 +50,17 @@ class MyApp extends ConsumerWidget {
         '/generate_bill': (context) {
           final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
           return GenerateBillScreen(
-            orderId: args?['orderId'] ?? '',
-            tableId: args?['tableId'] ?? '',
-            totalAmount: args?['totalAmount'] ?? 0.0,
+            args: GenerateBillArgs(
+              orderId: args?['orderId'] ?? '',
+              tableId: args?['tableId'] ?? '',
+              totalAmount: args?['totalAmount'] ?? 0.0,
+            ),
           );
         },
         '/show_qr': (context) {
           final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
           return ShowQrScreen(
-            orderId: args?['orderId'] ?? '',
-            tableId: args?['tableId'] ?? '',
-            totalAmount: args?['totalAmount'] ?? 0.0,
+            bill: args?['bill'] as Bill,
           );
         },
         '/admin_scan_bill': (context) => const AdminScanBillScreen(),
