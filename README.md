@@ -1,16 +1,28 @@
-# chiya_sathi
+Chiyasathi ☕
 
-A new Flutter project.
+— A smart cafe ordering system
 
-## Getting Started
+What It Does
+A customer walks in and scans the QR code on their table. The menu opens on their phone. They pick what they want and place the order. The cafe owner sees it instantly on their dashboard, accepts it, and marks it as ready when the kitchen is done. The customer gets notified, walks to the counter, and shows their in-app bill to pay.
+No paper slips. No shouting across the room. No lost orders.
 
-This project is a starting point for a Flutter application.
+For Customers
 
-A few resources to get you started if this is your first Flutter project:
+Scan the table QR and the menu loads instantly
+Browse by category, add items, place the order
+Watch the order status update live
+Get notified the moment it is ready
+Show the bill screen at the counter to pay
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+For Cafe Owners
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+See every incoming order in real time
+Accept, reject, or mark orders as ready
+Manage the menu — add, edit, or hide items anytime
+Keep track of past orders
+
+
+Links
+Backend - https://github.com/yugpokharel/my-backend.git
+
+Built for small cafes. No hardware. No complicated setup. Just scan and order.
