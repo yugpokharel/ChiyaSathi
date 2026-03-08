@@ -1,3 +1,4 @@
+import 'package:chiya_sathi/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chiya_sathi/features/auth/presentation/view_model/auth_view_model_provider.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,14 +9,17 @@ import 'package:chiya_sathi/features/auth/domain/usecases/login_usecase.dart';
 import 'package:chiya_sathi/features/auth/domain/usecases/register_usecase.dart';
 import 'package:chiya_sathi/features/auth/domain/entities/auth_entity.dart';
 import 'package:chiya_sathi/core/error/failures.dart';
+import 'package:chiya_sathi/features/auth/domain/repositories/auth_repository.dart';
 
 class MockLoginUsecase extends Mock implements LoginUsecase {}
 class MockRegisterUsecase extends Mock implements RegisterUsecase {}
+class MockAuthRepository extends Mock implements IAuthRepository {}
 
 void main() {
   late ProviderContainer container;
   late MockLoginUsecase mockLoginUsecase;
   late MockRegisterUsecase mockRegisterUsecase;
+  late MockAuthRepository mockAuthRepository;
 
   const tEmail = 'test@gmail.com';
   const tPassword = '123456';
@@ -49,11 +53,13 @@ void main() {
   setUp(() {
     mockLoginUsecase = MockLoginUsecase();
     mockRegisterUsecase = MockRegisterUsecase();
+    mockAuthRepository = MockAuthRepository();
 
     container = ProviderContainer(
       overrides: [
         loginUseCaseProvider.overrideWith((ref) => mockLoginUsecase),
         registerUseCaseProvider.overrideWith((ref) => mockRegisterUsecase),
+        authRepositoryProvider.overrideWith((ref) => mockAuthRepository),
       ],
     );
   });

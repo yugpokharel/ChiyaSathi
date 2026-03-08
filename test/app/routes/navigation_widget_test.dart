@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Tests for general navigation and routing patterns used in the app.
 void main() {
   group('App Navigation Widget Tests', () {
     testWidgets('pushNamed navigates to correct route', (tester) async {
