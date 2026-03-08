@@ -2,6 +2,38 @@ import 'package:chiya_sathi/features/payment/data/models/bill_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'show_qr_screen.dart';
+import 'dart:math';
+import 'package:chiya_sathi/features/payment/presentation/pages/admin_scan_bill_screen.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+// Short order key generator
+String _generateShortOrderKey() {
+  final words = [
+    'chai', 'latte', 'sathi', 'order', 'table', 'tea', 'bill', 'cup', 'serve', 'fast', 'easy', 'hot', 'cool', 'sweet', 'spice', 'leaf', 'brew', 'sip', 'milk', 'black', 'green', 'gold', 'mint', 'herb', 'fresh', 'bold', 'rich', 'taste', 'blend', 'shop', 'cafe', 'nepal', 'kathmandu', 'pokhara', 'mount', 'hill', 'river', 'cloud', 'sun', 'moon', 'star', 'joy', 'happy', 'smile', 'cheer', 'peace', 'calm', 'zen', 'buzz', 'rush', 'chill', 'relax', 'cozy', 'warm', 'light', 'shine', 'glow', 'pure', 'classic', 'urban', 'local', 'global', 'trend', 'vibe', 'fun', 'yum',
+  ];
+  final rand = Random();
+  return List.generate(3, (_) => words[rand.nextInt(words.length)]).join('-');
+}
+
+// Store mapping from short order key to orderId
+class OrderKeyStore {
+  static final Map<String, String> _keyToOrderId = {};
+  static void add(String shortKey, String orderId) {
+    _keyToOrderId[shortKey] = orderId;
+  }
+  static String? getOrderId(String shortKey) => _keyToOrderId[shortKey];
+  static Map<String, String> get keyToOrderId => _keyToOrderId;
+}
+
+String _generateShortBillId() {
+  final words = [
+    'chai', 'latte', 'sathi', 'order', 'table', 'tea', 'bill', 'cup', 'serve', 'fast', 'easy', 'hot', 'cool', 'sweet', 'spice', 'leaf', 'brew', 'sip', 'milk', 'black', 'green', 'gold', 'mint', 'herb', 'fresh', 'bold', 'rich', 'taste', 'blend', 'shop', 'cafe', 'nepal', 'kathmandu', 'pokhara', 'mount', 'hill', 'river', 'cloud', 'sun', 'moon', 'star', 'joy', 'happy', 'smile', 'cheer', 'peace', 'calm', 'zen', 'buzz', 'rush', 'chill', 'relax', 'cozy', 'warm', 'light', 'shine', 'glow', 'pure', 'classic', 'urban', 'local', 'global', 'trend', 'vibe', 'fun', 'yum',
+    'taste', 'blend', 'leaf', 'brew', 'sip', 'milk', 'black', 'green', 'gold', 'mint', 'herb', 'fresh', 'bold', 'rich', 'shop', 'cafe', 'mount', 'hill', 'river', 'cloud', 'sun', 'moon', 'star', 'joy', 'happy', 'smile', 'cheer', 'peace', 'calm', 'zen', 'buzz', 'rush', 'chill', 'relax', 'cozy', 'warm', 'light', 'shine', 'glow', 'pure', 'classic', 'urban', 'local', 'global', 'trend', 'vibe', 'fun', 'yum'
+  ];
+  final rand = Random();
+  return List.generate(4, (_) => words[rand.nextInt(words.length)]).join('-');
+}
 
 Future<Bill> _generateBillFromBackend({
   required String orderId,
@@ -9,14 +41,19 @@ Future<Bill> _generateBillFromBackend({
   required double totalAmount,
 }) async {
   await Future.delayed(const Duration(milliseconds: 800));
-  final billId = 'BILL-${DateTime.now().millisecondsSinceEpoch}';
-  return Bill(
+  final billId = _generateShortBillId();
+  final shortOrderKey = _generateShortOrderKey();
+  OrderKeyStore.add(shortOrderKey, orderId);
+  final bill = Bill(
     billId: billId,
     orderId: orderId,
     tableId: tableId,
     totalAmount: totalAmount,
     generatedAt: DateTime.now(),
+    shortOrderKey: shortOrderKey,
   );
+  BillStore.addBill(bill); 
+  return bill;
 }
 
 final billGenerationProvider =
@@ -120,6 +157,8 @@ class _BillContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _BillCard(bill: bill),
+          const SizedBox(height: 12),
+          _DetailRow(label: 'Short Order Key', value: bill.shortOrderKey ?? 'N/A'),
           const SizedBox(height: 32),
           _ActionButton(
             label: 'Pay Online',
@@ -287,6 +326,59 @@ class _ErrorView extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+Future<List<Order>> fetchAllOrders() async {
+  final response = await http.get(Uri.parse('https://your-backend.com/api/orders'));
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((json) => Order.fromJson(json)).toList();
+  } else {
+    throw Exception('Failed to fetch orders');
+  }
+}
+
+String generateBillKey(String orderId) {
+  return 'CS-' + base64Url.encode(utf8.encode(orderId)).substring(0, 6).toUpperCase();
+}
+
+Future<Order?> lookupOrderByBillKey(String billKey) async {
+  final orders = await fetchAllOrders();
+  for (final order in orders) {
+    final key = generateBillKey(order.id);
+    if (key == billKey) {
+      return order;
+    }
+  }
+  return null;
+}
+
+Future<Order?> fetchOrderById(String orderId) async {
+  final response = await http.get(Uri.parse('https://your-backend.com/api/orders/$orderId'));
+  if (response.statusCode == 200) {
+    final json = jsonDecode(response.body);
+    return Order.fromJson(json);
+  } else {
+    return null;
+  }
+}
+
+class Order {
+  final String id;
+  final String customerName;
+  final List<String> items;
+  final String paymentStatus;
+
+  Order({required this.id, required this.customerName, required this.items, required this.paymentStatus});
+
+  factory Order.fromJson(Map<String, dynamic> json) {
+    return Order(
+      id: json['id'] as String,
+      customerName: json['customerName'] as String,
+      items: List<String>.from(json['items'] as List),
+      paymentStatus: json['paymentStatus'] as String,
     );
   }
 }

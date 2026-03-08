@@ -1,16 +1,25 @@
-
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:chiya_sathi/features/payment/data/models/bill_model.dart';
+import 'package:chiya_sathi/features/payment/presentation/pages/generate_bill_screen.dart'; // For OrderKeyStore
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:chiya_sathi/core/services/notification_service.dart';
 
-/// Simulated backend lookup by [billId].
-///
-/// Replace this with a real HTTP / database call in production.
+class BillStore {
+  static final Map<String, Bill> _bills = {};
+
+  static void addBill(Bill bill) {
+    _bills[bill.billId] = bill;
+  }
+
+  static Bill? getBill(String billId) => _bills[billId];
+}
 Future<Bill?> _lookupBillById(String billId) async {
   await Future.delayed(const Duration(milliseconds: 600));
+  final bill = BillStore.getBill(billId);
+  if (bill != null) return bill;
 
-  // Simulated database of bills
   final mockDb = <String, Map<String, dynamic>>{
     'BILL-001': {
       'billId': 'BILL-001',
@@ -27,22 +36,39 @@ Future<Bill?> _lookupBillById(String billId) async {
       'generatedAt': '2024-01-15T11:15:00.000',
     },
   };
-
   final data = mockDb[billId];
   if (data == null) return null;
   return Bill.fromJson(data);
 }
 
-/// Admin screen to scan a customer's QR bill or look it up by [billId].
-///
-/// Dependencies – add to pubspec.yaml:
-/// ```yaml
-/// dependencies:
-///   mobile_scanner: ^5.2.3
-/// ```
-///
-/// Android: add camera permission to AndroidManifest.xml
-/// iOS:     add NSCameraUsageDescription to Info.plist
+Future<Order?> fetchOrderById(String orderId) async {
+  final response = await http.get(Uri.parse('https://your-backend.com/api/orders/$orderId'));
+  if (response.statusCode == 200) {
+    final json = jsonDecode(response.body);
+    return Order.fromJson(json);
+  } else {
+    return null;
+  }
+}
+
+class Order {
+  final String id;
+  final String customerName;
+  final List<String> items;
+  final String paymentStatus;
+
+  Order({required this.id, required this.customerName, required this.items, required this.paymentStatus});
+
+  factory Order.fromJson(Map<String, dynamic> json) {
+    return Order(
+      id: json['id'] as String,
+      customerName: json['customerName'] as String,
+      items: List<String>.from(json['items'] as List),
+      paymentStatus: json['paymentStatus'] as String,
+    );
+  }
+}
+
 class AdminScanBillScreen extends StatefulWidget {
   const AdminScanBillScreen({super.key});
 
@@ -52,30 +78,35 @@ class AdminScanBillScreen extends StatefulWidget {
 
 class _AdminScanBillScreenState extends State<AdminScanBillScreen>
     with WidgetsBindingObserver {
-  // ── Camera controller ──────────────────────────────────────────────────────
   final MobileScannerController _cameraController = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
     returnImage: false,
   );
 
-  // ── Manual entry ───────────────────────────────────────────────────────────
   final TextEditingController _manualController = TextEditingController();
   final FocusNode _manualFocus = FocusNode();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  // ── State ──────────────────────────────────────────────────────────────────
-  bool _isScanning = true;   // true = camera tab, false = manual tab
+  bool _isScanning = true;   
   bool _isLoading = false;
-  bool _dialogOpen = false;  // guard against double-open
+  bool _dialogOpen = false;  
 
-  // ---------------------------------------------------------------------------
-  // Lifecycle
-  // ---------------------------------------------------------------------------
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    final demoBill = Bill(
+      billId: 'chai-latte-sathi-order',
+      orderId: 'ORD-2024-001',
+      tableId: 'T-01',
+      totalAmount: 350.00,
+      generatedAt: DateTime.now(),
+      shortOrderKey: 'abcd',
+    );
+    BillStore.addBill(demoBill);
+    OrderKeyStore.add('abcd', 'ORD-2024-001');
   }
 
   @override
@@ -97,9 +128,6 @@ class _AdminScanBillScreenState extends State<AdminScanBillScreen>
     super.dispose();
   }
 
-  // ---------------------------------------------------------------------------
-  // QR detection handler
-  // ---------------------------------------------------------------------------
 
   void _onDetect(BarcodeCapture capture) {
     if (_dialogOpen || _isLoading) return;
@@ -114,35 +142,46 @@ class _AdminScanBillScreenState extends State<AdminScanBillScreen>
     _processRawValue(rawValue);
   }
 
-  // ---------------------------------------------------------------------------
-  // Core processing – shared by QR scan and manual entry
-  // ---------------------------------------------------------------------------
 
   Future<void> _processRawValue(String rawValue) async {
     setState(() => _isLoading = true);
 
     try {
       Bill? bill;
+      String input = rawValue.trim();
 
-      // 1. Try to parse as a full JSON bill (from QR)
-      if (rawValue.trimLeft().startsWith('{')) {
+      // Debug: print available keys
+      debugPrint('AdminScanBillScreen: input="$input"');
+      debugPrint('BillStore keys: ${BillStore._bills.keys.toList()}');
+      debugPrint('OrderKeyStore keys: ${OrderKeyStore.keyToOrderId.keys.toList()}');
+
+      // Try JSON decode
+      if (input.startsWith('{')) {
         try {
-          bill = Bill.fromJsonString(rawValue);
-        } catch (_) {
-          // JSON was malformed – fall through to ID lookup
-        }
+          bill = Bill.fromJsonString(input);
+        } catch (_) {}
       }
 
-      // 2. Otherwise treat it as a plain billId (manual entry or simple QR)
+      // Try billId lookup
       if (bill == null) {
-        bill = await _lookupBillById(rawValue.trim());
+        bill = await _lookupBillById(input);
+      }
+
+      // Try short order key lookup
+      if (bill == null) {
+        final mappedOrderId = OrderKeyStore.getOrderId(input);
+        debugPrint('OrderKeyStore.getOrderId("$input") = $mappedOrderId');
+        if (mappedOrderId != null) {
+          final bills = BillStore._bills.values.where((b) => b.orderId == mappedOrderId);
+          bill = bills.isNotEmpty ? bills.first : null;
+        }
       }
 
       if (!mounted) return;
       setState(() => _isLoading = false);
 
       if (bill == null) {
-        _showErrorSnackBar('Bill "$rawValue" not found.');
+        _showErrorSnackBar('Bill or order key "$input" not found.');
         _cameraController.start();
         return;
       }
@@ -156,19 +195,13 @@ class _AdminScanBillScreenState extends State<AdminScanBillScreen>
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Manual lookup
-  // ---------------------------------------------------------------------------
-
   void _onManualLookup() {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
     _processRawValue(_manualController.text.trim());
   }
 
-  // ---------------------------------------------------------------------------
-  // Dialog
-  // ---------------------------------------------------------------------------
+
 
   void _showBillDialog(Bill bill) {
     if (_dialogOpen) return;
@@ -179,10 +212,16 @@ class _AdminScanBillScreenState extends State<AdminScanBillScreen>
       barrierDismissible: false,
       builder: (_) => _BillDialog(
         bill: bill,
-        onSettle: () {
+        onSettle: () async {
           Navigator.of(context).pop(); // close dialog
           _dialogOpen = false;
           _cameraController.start();
+          // Settle the order (simulate or call backend here)
+          // Send push notification to user
+          await NotificationService().showOrderNotification(
+            title: 'Order Settled',
+            body: 'Thank you for ordering with ChiyaSathi',
+          );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Bill ${bill.billId} marked as settled ✓'),
@@ -200,9 +239,6 @@ class _AdminScanBillScreenState extends State<AdminScanBillScreen>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -213,10 +249,6 @@ class _AdminScanBillScreenState extends State<AdminScanBillScreen>
       ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -262,10 +294,6 @@ class _AdminScanBillScreenState extends State<AdminScanBillScreen>
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Tab bar
-// ---------------------------------------------------------------------------
 
 class _TabBar extends StatelessWidget {
   final bool isScanning;
@@ -348,10 +376,6 @@ class _Tab extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Scanner view
-// ---------------------------------------------------------------------------
-
 class _ScannerView extends StatelessWidget {
   final MobileScannerController controller;
   final void Function(BarcodeCapture) onDetect;
@@ -401,10 +425,6 @@ class _ScannerView extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Manual entry view
-// ---------------------------------------------------------------------------
-
 class _ManualEntryView extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController controller;
@@ -435,7 +455,7 @@ class _ManualEntryView extends StatelessWidget {
                 color: Color(0xFF6B3F1A), size: 64),
             const SizedBox(height: 24),
             Text(
-              'Enter Bill ID',
+              'Enter Bill ID or Short Order Key',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -444,7 +464,7 @@ class _ManualEntryView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Type or paste the bill ID to look up the bill details.',
+              'Type or paste the bill ID or short order key to look up the bill details.',
               textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme
@@ -455,10 +475,10 @@ class _ManualEntryView extends StatelessWidget {
             TextFormField(
               controller: controller,
               focusNode: focusNode,
-              textCapitalization: TextCapitalization.characters,
+              textCapitalization: TextCapitalization.none,
               decoration: InputDecoration(
-                labelText: 'Bill ID',
-                hintText: 'e.g. BILL-001',
+                labelText: 'Bill ID or Order Key',
+                hintText: 'e.g. chai-latte-sathi-order or abcd',
                 prefixIcon: const Icon(Icons.tag_rounded,
                     color: Color(0xFF6B3F1A)),
                 border: OutlineInputBorder(
@@ -473,7 +493,12 @@ class _ManualEntryView extends StatelessWidget {
               ),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) {
-                  return 'Please enter a bill ID';
+                  return 'Please enter a bill ID or order key';
+                }
+                final billPattern = RegExp(r'^[a-z]+(-[a-z]+){2,3}$'); // 3 or 4 words
+                final orderKeyPattern = RegExp(r'^[a-zA-Z0-9]{4,6}$'); // 4-6 chars
+                if (!billPattern.hasMatch(v.trim()) && !orderKeyPattern.hasMatch(v.trim())) {
+                  return 'Enter a valid bill ID (3-4 words) or short order key (4-6 chars)';
                 }
                 return null;
               },
@@ -495,20 +520,6 @@ class _ManualEntryView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // Hint for test data
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEDE0D4),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text(
-                '💡 Try demo IDs: BILL-001 or BILL-002',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 12, color: Color(0xFF4A2C0A)),
-              ),
-            ),
           ],
         ),
       ),
@@ -550,7 +561,7 @@ class _BillDialog extends StatelessWidget {
         ],
       ),
       content: Column(
-        mainAxisSize: MainAxisSize.min,
+  // Removed unused _OrderDialog class
         children: [
           const Divider(),
           _DialogRow(label: 'Bill ID', value: bill.billId),
@@ -663,6 +674,37 @@ class _LoadingOverlay extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _OrderDialog extends StatelessWidget {
+  final Order order;
+  final VoidCallback onClose;
+
+  const _OrderDialog({required this.order, required this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Order Details', style: TextStyle(fontWeight: FontWeight.bold)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Order ID: ${order.id}'),
+          Text('Customer: ${order.customerName}'),
+          Text('Items: ${order.items.join(", ")}'),
+          Text('Payment Status: ${order.paymentStatus}'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: onClose,
+          child: const Text('Close'),
+        ),
+      ],
     );
   }
 }

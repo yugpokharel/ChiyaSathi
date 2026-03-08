@@ -1,5 +1,4 @@
-// bill_model.dart
-// Chiya Sathi - Bill Model
+
 
 import 'dart:convert';
 
@@ -9,6 +8,7 @@ class Bill {
   final String tableId;
   final double totalAmount;
   final DateTime generatedAt;
+  final String? shortOrderKey;
 
   const Bill({
     required this.billId,
@@ -16,9 +16,9 @@ class Bill {
     required this.tableId,
     required this.totalAmount,
     required this.generatedAt,
+    this.shortOrderKey,
   });
 
-  /// Creates a Bill from a JSON map (e.g. parsed from QR code or API response)
   factory Bill.fromJson(Map<String, dynamic> json) {
     return Bill(
       billId: json['billId'] as String,
@@ -26,10 +26,10 @@ class Bill {
       tableId: json['tableId'] as String,
       totalAmount: (json['totalAmount'] as num).toDouble(),
       generatedAt: DateTime.parse(json['generatedAt'] as String),
+      shortOrderKey: json['shortOrderKey'] as String?,
     );
   }
 
-  /// Converts the Bill to a JSON map
   Map<String, dynamic> toJson() {
     return {
       'billId': billId,
@@ -37,13 +37,12 @@ class Bill {
       'tableId': tableId,
       'totalAmount': totalAmount,
       'generatedAt': generatedAt.toIso8601String(),
+      if (shortOrderKey != null) 'shortOrderKey': shortOrderKey,
     };
   }
 
-  /// Serialises to a JSON string (used for QR code data)
   String toJsonString() => jsonEncode(toJson());
 
-  /// Deserialises from a JSON string (used when scanning QR code)
   static Bill fromJsonString(String jsonString) {
     final Map<String, dynamic> map =
         jsonDecode(jsonString) as Map<String, dynamic>;
@@ -56,6 +55,7 @@ class Bill {
     String? tableId,
     double? totalAmount,
     DateTime? generatedAt,
+    String? shortOrderKey,
   }) {
     return Bill(
       billId: billId ?? this.billId,
@@ -63,6 +63,7 @@ class Bill {
       tableId: tableId ?? this.tableId,
       totalAmount: totalAmount ?? this.totalAmount,
       generatedAt: generatedAt ?? this.generatedAt,
+      shortOrderKey: shortOrderKey ?? this.shortOrderKey,
     );
   }
 
